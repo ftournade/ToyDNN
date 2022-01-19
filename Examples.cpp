@@ -110,11 +110,10 @@ Example2::Example2()
 {
     
     srand( 111 );
-    //178x218 images
 
     bool halfRes = true;
 
-    if( !LoadCelebADataset( "D:\\Dev\\DeepLearning Datasets\\CelebA", halfRes, 0.01f /*load 10% of database*/, 0.0001f,
+    if( !LoadCelebADataset( "D:\\Dev\\DeepLearning Datasets\\CelebA", halfRes, 2.0f, 0.02f,
                             m_TrainingData, m_ValidationData, m_TrainingMetaData, m_ValidationMetaData ) )
         throw std::exception("Can't load celebA database");
 
@@ -143,5 +142,5 @@ Example2::Example2()
 
 void Example2::Tick( HDC _hdc )
 {
-    net.Train( m_TrainingData, m_TrainingData, m_ValidationData, m_ValidationData, 1, 5, 0.02f );
+    net.Train( m_TrainingData, m_TrainingData, m_ValidationData, m_ValidationData, 1, 10, 0.02f );
 }

@@ -115,14 +115,17 @@ bool LoadCelebADataset( const char* _filepath,
 
 bool LoadCelebADataset( const char* _filepath,
 						bool _halfRes,
-						float _trainingSetRatio, //e.g. 0.5 loads 50% of the database
-						float _validationSetRatio,
+						float _trainingSetRatio, //in percent
+						float _validationSetRatio, //in percent
 						std::vector< Tensor >& _trainingSetData,
 						std::vector< Tensor >& _validationSetData,
 						std::vector< CelebAMetaData >& _trainingSetMetaData,
 						std::vector< CelebAMetaData >& _validationSetMetaData )
 {
 	
+	_trainingSetRatio /= 100.0f;
+	_validationSetRatio /= 100.0f;
+
 	assert( _trainingSetRatio > 0.0f && _trainingSetRatio <= 1.0f );
 	assert( _validationSetRatio > 0.0f && _validationSetRatio <= 1.0f );
 	assert( _trainingSetRatio + _validationSetRatio <= 1.0f );
