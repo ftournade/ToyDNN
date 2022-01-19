@@ -77,7 +77,7 @@ void BaseExample::PlotLearningCurve( HDC _hdc, const RECT& _r ) const
 
 Example1::Example1()
 {
-    net.AddLayer( std::make_unique<FullyConnectedLayer<Sigmoid>>( 2, 2 ) );
+    net.AddLayer( std::make_unique<FullyConnectedLayer<Activation::Sigmoid>>( 2, 2 ) );
 
     m_ExpectedOutput.push_back( { 0.666f, 0.333f } );
     m_Input.push_back( { 0.9f, 0.2f } );
@@ -119,22 +119,8 @@ Example2::Example2()
     if( halfRes )
         numImagePixels /= 4;
 
-    uint32_t numPixels = numImagePixels;
-    net.AddLayer( std::make_unique<FullyConnectedLayer<Sigmoid>>( numPixels, numPixels / 4 ) );
-    numPixels /= 4;
-    net.AddLayer( std::make_unique<FullyConnectedLayer<Sigmoid>>( numPixels, numPixels / 4 ) );
-    numPixels /= 4;
-    net.AddLayer(std::make_unique<FullyConnectedLayer<Sigmoid>>( numPixels, numPixels / 4));
-    numPixels /= 4;
-    net.AddLayer( std::make_unique<FullyConnectedLayer<Sigmoid>>( numPixels, numPixels / 4 ) ); //Latent space (a.k.a. network "bottleneck")
-    numPixels /= 4;
-    net.AddLayer( std::make_unique<FullyConnectedLayer<Sigmoid>>( numPixels, numPixels * 4 ) );
-    numPixels *= 4;
-    net.AddLayer( std::make_unique<FullyConnectedLayer<Sigmoid>>( numPixels, numPixels * 4 ) );
-    numPixels *= 4;
-    net.AddLayer( std::make_unique<FullyConnectedLayer<Sigmoid>>( numPixels, numPixels * 4 ) );
-    numPixels *= 4;
-    net.AddLayer( std::make_unique<FullyConnectedLayer<Sigmoid>>( numPixels, numImagePixels ) );
+    net.AddLayer( std::make_unique<FullyConnectedLayer<Activation::Relu>>( numImagePixels, numImagePixels / 8 ) );
+    net.AddLayer( std::make_unique<FullyConnectedLayer<Activation::Sigmoid>>( numImagePixels / 8, numImagePixels ) );
 
     if( !LoadCelebADataset( "D:\\Dev\\DeepLearning Datasets\\CelebA", halfRes, 2.0f, 0.02f,
                             m_TrainingData, m_ValidationData, m_TrainingMetaData, m_ValidationMetaData ) )
@@ -143,5 +129,5 @@ Example2::Example2()
 
 void Example2::Tick( HDC _hdc )
 {
-    net.Train( m_TrainingData, m_TrainingData, m_ValidationData, m_ValidationData, 1, 10, 0.02f );
+    net.Train( m_TrainingData, m_TrainingData, m_ValidationData, m_ValidationData, 1, 50, 0.0002f );
 }

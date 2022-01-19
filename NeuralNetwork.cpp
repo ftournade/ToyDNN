@@ -172,14 +172,14 @@ float NeuralNetwork::ComputeError( const std::vector<Tensor>& _dataSet, const st
 		Evaluate( _dataSet[i], out );
 
 	#if 1 //Test
-		//if( i == 1 )
+		//if( i == 0 )
 		{
 			#define SX (178/2)
 			#define SY (218/2)
 			char buf[512];
-			sprintf_s( buf, "d:\\vs%d_in.bmp", i );
+			sprintf_s( buf, "d:\\tmp\\vs%d_in.bmp", i );
 			WriteBMP( buf, true, _dataSet[i], SX, SY );
-			sprintf_s( buf, "d:\\vs%d_out.bmp", i );
+			sprintf_s( buf, "d:\\tmp\\vs%d_out.bmp", i );
 			WriteBMP( buf, true, out, SX, SY );
 		}
 	#endif
