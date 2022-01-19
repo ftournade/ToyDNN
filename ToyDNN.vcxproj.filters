@@ -63,6 +63,9 @@
     <ClInclude Include="BMP.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ActivationFuncs.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ToyDNN.cpp">

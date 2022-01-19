@@ -141,6 +141,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="ActivationFuncs.h" />
     <ClInclude Include="BMP.h" />
     <ClInclude Include="Datasets.h" />
     <ClInclude Include="Examples.h" />

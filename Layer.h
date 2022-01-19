@@ -1,24 +1,11 @@
 #pragma once
 
 #include "Tensor.h"
+#include "ActivationFuncs.h"
 
-#include <math.h>
 #include <algorithm>
 #include <assert.h>
 
-class Sigmoid
-{
-public:
-	static float Compute( float x )
-	{
-		return 1.0f / (1.0f + expf( -x ));
-	}
-
-	static float ComputeDerivative( float x, float y )
-	{
-		return y * (1.0f - y);
-	}
-};
 
 inline float Lerp( float t, float a, float b )
 {
