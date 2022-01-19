@@ -6,26 +6,50 @@
 
 
 
-bool LoadJpeg( const char* _filename, bool _grayscale, Tensor& _pixels )
+bool LoadJpeg( const char* _filename, bool _halfRes, bool _grayscale, Tensor& _pixels )
 {
 	std::vector< uint8_t > rgbPixels; //RGB8
+	uint32_t width, height;
 
-	if( !LoadJpeg( _filename, rgbPixels ) )
+	if( !LoadJpeg( _filename, rgbPixels, width, height ) )
 		return false;
 
-	uint32_t numPixels = rgbPixels.size() / 3;
 
 	if( _grayscale )
 	{
-		_pixels.resize( numPixels );
+		auto Grayscale = [&]( uint32_t x, uint32_t y ) {
+			uint32_t idx = (y * width + x) * 3;
+			return ((float)rgbPixels[idx] + (float)rgbPixels[idx + 1] + (float)rgbPixels[idx + 2]) / (3.0f * 255.0f); };
 
-		for( uint32_t i = 0 ; i < numPixels ; ++i )
+		if( _halfRes )
 		{
-			float p = (float)rgbPixels[i * 3] + (float)rgbPixels[i * 3 + 1] + (float)rgbPixels[i * 3 + 2];
-			p /= 3.0f;
-			_pixels[i] = p / 255.0f;
-		}
+			assert( (width % 2 == 0) && (height % 2 == 0) ); //TODO handle odd resolutions
+			_pixels.resize( width * height / 4 );
 
+			for( uint32_t y = 0 ; y < height / 2 ; ++y )
+			{
+				for( uint32_t x = 0 ; x < width / 2 ; ++x )
+				{
+					//Average 4 pixels
+					float p = Grayscale( x*2, y*2 ) + Grayscale( x*2+1, y*2 ) + Grayscale( x*2, y*2+1 ) + Grayscale( x*2+1, y*2+1 );
+					p *= 0.25f;
+
+					_pixels[y * width / 2 + x] = p;
+				}
+			}
+		}
+		else
+		{
+			_pixels.resize( rgbPixels.size() / 3 );
+
+			for( uint32_t y = 0 ; y < height ; ++y )
+			{
+				for( uint32_t x = 0 ; x < width ; ++x )
+				{
+					_pixels[y*width + x] = Grayscale( x, y );
+				}
+			}
+		}
 	}
 	else
 	{
@@ -45,7 +69,7 @@ bool WriteBMP( const char* _filename, bool _grayscale, const Tensor& _pixels, in
 	
 		for( uint32_t i = 0 ; i < _pixels.size() ; ++i )
 		{
-			uint8_t p = _pixels[i] * 255.0f; //TODO saturate
+			uint8_t p =(uint8_t)( _pixels[i] * 255.0f ); //TODO saturate
 			data[i * 3] = p;
 			data[i * 3 + 1] = p;
 			data[i * 3 + 2] = p;
@@ -58,6 +82,7 @@ bool WriteBMP( const char* _filename, bool _grayscale, const Tensor& _pixels, in
 const uint32_t CelebADatasetSize = 202599;
 
 bool LoadCelebADataset( const char* _filepath,
+						bool _halfRes,
 						uint32_t _firstSample, 
 						uint32_t _numSamples,
 						std::vector< Tensor >& _data,
@@ -74,7 +99,7 @@ bool LoadCelebADataset( const char* _filepath,
 		char filename[1024];
 		sprintf_s( filename, "%s\\%06d.jpg", _filepath, _firstSample + i );
 
-		if( !LoadJpeg( filename, true, _data[i] ) )
+		if( !LoadJpeg( filename, _halfRes, true, _data[i] ) )
 			return false;
 
 		if( (i > 0) && (i % 50 == 0) )
@@ -89,6 +114,7 @@ bool LoadCelebADataset( const char* _filepath,
 }
 
 bool LoadCelebADataset( const char* _filepath,
+						bool _halfRes,
 						float _trainingSetRatio, //e.g. 0.5 loads 50% of the database
 						float _validationSetRatio,
 						std::vector< Tensor >& _trainingSetData,
@@ -104,10 +130,10 @@ bool LoadCelebADataset( const char* _filepath,
 	uint32_t trainingSetSize = (uint32_t)((float)CelebADatasetSize * _trainingSetRatio);
 	uint32_t validationSetSize = (uint32_t)((float)CelebADatasetSize * _validationSetRatio);
 
-	if( !LoadCelebADataset( _filepath, 1, trainingSetSize, _trainingSetData, _trainingSetMetaData ) )
+	if( !LoadCelebADataset( _filepath, _halfRes, 1, trainingSetSize, _trainingSetData, _trainingSetMetaData ) )
 		return false;
 
-	if( !LoadCelebADataset( _filepath, trainingSetSize + 1, validationSetSize, _validationSetData, _validationSetMetaData ) )
+	if( !LoadCelebADataset( _filepath, _halfRes, trainingSetSize + 1, validationSetSize, _validationSetData, _validationSetMetaData ) )
 		return false;
 
 	return true;

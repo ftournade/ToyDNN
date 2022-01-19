@@ -112,11 +112,18 @@ Example2::Example2()
     srand( 111 );
     //178x218 images
 
-    if( !LoadCelebADataset( "D:\\Dev\\DeepLearning Datasets\\CelebA", 0.01f /*load 10% of database*/, 0.0001f, 
+    bool halfRes = true;
+
+    if( !LoadCelebADataset( "D:\\Dev\\DeepLearning Datasets\\CelebA", halfRes, 0.01f /*load 10% of database*/, 0.0001f,
                             m_TrainingData, m_ValidationData, m_TrainingMetaData, m_ValidationMetaData ) )
         throw std::exception("Can't load celebA database");
 
-    uint32_t numPixels = 178 * 218;
+    uint32_t numImagePixels = 178 * 218;
+
+    if( halfRes )
+        numImagePixels /= 4;
+
+    uint32_t numPixels = numImagePixels;
     net.AddLayer( std::make_unique<FullyConnectedLayer<Sigmoid>>( numPixels, numPixels / 4 ) );
     numPixels /= 4;
     net.AddLayer( std::make_unique<FullyConnectedLayer<Sigmoid>>( numPixels, numPixels / 4 ) );
@@ -131,7 +138,7 @@ Example2::Example2()
     numPixels *= 4;
     net.AddLayer( std::make_unique<FullyConnectedLayer<Sigmoid>>( numPixels, numPixels * 4 ) );
     numPixels *= 4;
-    net.AddLayer( std::make_unique<FullyConnectedLayer<Sigmoid>>( numPixels, 178 * 218 ) );
+    net.AddLayer( std::make_unique<FullyConnectedLayer<Sigmoid>>( numPixels, numImagePixels ) );
 }
 
 void Example2::Tick( HDC _hdc )

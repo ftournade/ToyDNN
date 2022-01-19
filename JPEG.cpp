@@ -91,7 +91,7 @@ int jpeg_output_func(	/* 1:Ok, 0:Aborted */
 	return 1;	/* Continue to decompress */
 }
 
-bool LoadJpeg( const char* fname, std::vector< uint8_t >& _pixels )
+bool LoadJpeg( const char* fname, std::vector< uint8_t >& _pixels, uint32_t& _width, uint32_t& _height )
 {
 	const size_t sz_work = 32768;	/* Size of working buffer for TJpgDec module */
 	JDEC jd;		/* TJpgDec decompression object */
@@ -126,6 +126,9 @@ bool LoadJpeg( const char* fname, std::vector< uint8_t >& _pixels )
 	rc = jd_decomp( &jd, jpeg_output_func, SCALE );
 
 	CloseHandle( iodev.hin );	/* Close JPEG file */
+
+	_width = jd.width;
+	_height = jd.height;
 
 	return true;
 }
