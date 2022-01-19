@@ -34,30 +34,36 @@ inline float Random( float _min, float _max )
 class Layer
 {
 public:
+	Layer( uint32_t _numInputs, uint32_t _numOutputs ) : m_NumInputs( _numInputs ),	m_NumOutputs( _numOutputs ) {}
 	virtual ~Layer() {}
 	virtual void Forward( const Tensor& _in, Tensor& _out ) = 0;
 	virtual void ClearWeightDeltas() = 0;
 	virtual void ApplyWeightDeltas( float _learningRate ) = 0;
 	virtual void BackPropagation( const Tensor& _layerInputs, const Tensor& _outputGradients/*in*/, Tensor& _inputGradients /*out*/) = 0;
 	virtual const Tensor& GetOutput() const = 0;
+
+	inline uint32_t GetNumInputs() const { return m_NumInputs; }
+	inline uint32_t GetNumOutputs() const { return m_NumOutputs; }
+protected:
+	uint32_t m_NumInputs, m_NumOutputs;
+
 };
 
 template <typename Activation>
 class FullyConnectedLayer : public Layer
 {
 public:
-	FullyConnectedLayer( uint32_t _numInputs, uint32_t _numNeurons ) :
-		m_NumInputs( _numInputs ),
-		m_NumNeurons( _numNeurons )
+	FullyConnectedLayer( uint32_t _numInputs, uint32_t _numOutputs /*number of neurons*/) :
+		Layer( _numInputs, _numOutputs )
 	{
-		m_Weights.resize( _numInputs * _numNeurons );
-		m_DeltaWeights.resize( _numInputs * _numNeurons );
+		m_Weights.resize( _numInputs * _numOutputs );
+		m_DeltaWeights.resize( _numInputs * _numOutputs );
 
-		m_Biases.resize( _numNeurons );
-		m_DeltaBiases.resize( _numNeurons );
+		m_Biases.resize( _numOutputs );
+		m_DeltaBiases.resize( _numOutputs );
 
-		m_NetInputs.resize( _numNeurons );
-		m_Activations.resize( _numNeurons );
+		m_NetInputs.resize( _numOutputs );
+		m_Activations.resize( _numOutputs );
 
 		// https://machinelearningmastery.com/weight-initialization-for-deep-learning-neural-networks/#:~:text=each%20in%20turn.-,Xavier%20Weight%20Initialization,of%20inputs%20to%20the%20node.&text=We%20can%20implement%20this%20directly%20in%20Python.
 		float xavierWeightRange = 1.0f / sqrtf( (float)_numInputs );
@@ -68,10 +74,10 @@ public:
 
 	virtual void Forward( const Tensor& _in, Tensor& _out ) override
 	{
-		_out.resize( m_NumNeurons );
+		_out.resize( m_NumOutputs );
 
 		#pragma omp parallel for
-		for( int i = 0 ; i < (int)m_NumNeurons ; ++i )
+		for( int i = 0 ; i < (int)m_NumOutputs ; ++i )
 		{
 			float netSum = m_Biases[i];
 
@@ -83,8 +89,12 @@ public:
 			}
 
 			_out[i] = Activation::Compute( netSum );
-			m_NetInputs[i] = netSum;
-			m_Activations[i] = _out[i];
+			
+			//TODO if( isTraining )
+			{
+				m_NetInputs[i] = netSum;
+				m_Activations[i] = _out[i];
+			}
 		}
 	}
 
@@ -97,7 +107,7 @@ public:
 	virtual void ApplyWeightDeltas( float _learningRate ) override
 	{
 		#pragma omp parallel for
-		for( int i = 0 ; i < (int)m_NumNeurons ; ++i )
+		for( int i = 0 ; i < (int)m_NumOutputs ; ++i )
 		{
 			m_Biases[i] -= _learningRate * m_DeltaBiases[i];
 
@@ -114,7 +124,7 @@ public:
 		std::fill( _inputGradients.begin(), _inputGradients.end(), 0.0f );
 
 		#pragma omp parallel for
-		for( int i = 0 ; i < (int)m_NumNeurons ; ++i )
+		for( int i = 0 ; i < (int)m_NumOutputs ; ++i )
 		{
 			float dA_dN = Activation::ComputeDerivative( m_NetInputs[i], m_Activations[i] );
 			float dE_dN = _outputGradients[i] * dA_dN;
@@ -137,7 +147,6 @@ public:
 	virtual const Tensor& GetOutput() const override { return m_Activations; }
 
 private:
-	uint32_t m_NumInputs, m_NumNeurons;
 	std::vector<float> m_Weights;
 	std::vector<float> m_Biases;
 	std::vector<float> m_DeltaWeights;

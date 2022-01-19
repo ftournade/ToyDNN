@@ -34,6 +34,13 @@ void Dump( const Tensor& t )
 	Log( "\n" );
 }
 
+void NeuralNetwork::AddLayer( std::unique_ptr<Layer> _layer ) 
+{
+	assert( m_Layers.empty() || (_layer->GetNumInputs() == m_Layers.back()->GetNumOutputs() ) );
+
+	m_Layers.push_back( std::move( _layer ) ); 
+}
+
 
 float NeuralNetwork::Train( const std::vector<Tensor>& _trainingSet,
 							const std::vector<Tensor>& _trainingSetExpectedOutput,

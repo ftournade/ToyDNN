@@ -111,11 +111,8 @@ Example2::Example2()
     
     srand( 111 );
 
-    bool halfRes = true;
+    const bool halfRes = true;
 
-    if( !LoadCelebADataset( "D:\\Dev\\DeepLearning Datasets\\CelebA", halfRes, 2.0f, 0.02f,
-                            m_TrainingData, m_ValidationData, m_TrainingMetaData, m_ValidationMetaData ) )
-        throw std::exception("Can't load celebA database");
 
     uint32_t numImagePixels = 178 * 218;
 
@@ -127,7 +124,7 @@ Example2::Example2()
     numPixels /= 4;
     net.AddLayer( std::make_unique<FullyConnectedLayer<Sigmoid>>( numPixels, numPixels / 4 ) );
     numPixels /= 4;
-    net.AddLayer(std::make_unique<FullyConnectedLayer<Sigmoid>>(numPixels, numPixels / 4));
+    net.AddLayer(std::make_unique<FullyConnectedLayer<Sigmoid>>( numPixels, numPixels / 4));
     numPixels /= 4;
     net.AddLayer( std::make_unique<FullyConnectedLayer<Sigmoid>>( numPixels, numPixels / 4 ) ); //Latent space (a.k.a. network "bottleneck")
     numPixels /= 4;
@@ -138,6 +135,10 @@ Example2::Example2()
     net.AddLayer( std::make_unique<FullyConnectedLayer<Sigmoid>>( numPixels, numPixels * 4 ) );
     numPixels *= 4;
     net.AddLayer( std::make_unique<FullyConnectedLayer<Sigmoid>>( numPixels, numImagePixels ) );
+
+    if( !LoadCelebADataset( "D:\\Dev\\DeepLearning Datasets\\CelebA", halfRes, 2.0f, 0.02f,
+                            m_TrainingData, m_ValidationData, m_TrainingMetaData, m_ValidationMetaData ) )
+        throw std::exception("Can't load celebA database");
 }
 
 void Example2::Tick( HDC _hdc )

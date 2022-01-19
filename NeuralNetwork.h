@@ -7,7 +7,7 @@
 class NeuralNetwork
 {
 public:
-	void AddLayer( std::unique_ptr<Layer> _layer ) { m_Layers.push_back( std::move(_layer) ); }
+	void AddLayer( std::unique_ptr<Layer> _layer );
 
 	//Return error metric
 	float Train( const std::vector<Tensor>& _trainingSet,
