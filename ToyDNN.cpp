@@ -7,6 +7,8 @@
 #include "Examples.h"
 #include "Util.h"
 
+#include <Windowsx.h>
+
 #define MAX_LOADSTRING 100
 
 // Global Variables:
@@ -24,7 +26,7 @@ std::unique_ptr<BaseExample> g_example;
 
 void InitExampleNetwork()
 {
-    g_example = std::make_unique<Example2>();
+    g_example = std::make_unique<Example3>();
 }
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
@@ -123,6 +125,8 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
       return FALSE;
    }
 
+   g_example->SetHwnd( hWnd );
+
    ShowWindow(hWnd, nCmdShow);
    UpdateWindow(hWnd);
 
@@ -171,6 +175,23 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             InvalidateRect( hWnd, nullptr, FALSE );
         }
         break;
+
+    case WM_LBUTTONDOWN:
+        g_example->OnLMouseButtonDown( { GET_X_LPARAM( lParam ), GET_Y_LPARAM( lParam ) } );
+        break;
+    case WM_LBUTTONUP:
+        g_example->OnLMouseButtonUp( { GET_X_LPARAM( lParam ), GET_Y_LPARAM( lParam ) } );
+        break;
+    case WM_RBUTTONDOWN:
+        g_example->OnRMouseButtonDown( { GET_X_LPARAM( lParam ), GET_Y_LPARAM( lParam ) } );
+        break;
+    case WM_RBUTTONUP:
+        g_example->OnRMouseButtonUp( { GET_X_LPARAM( lParam ), GET_Y_LPARAM( lParam ) } );
+        break;
+    case WM_MOUSEMOVE:
+        g_example->OnMouseMove( { GET_X_LPARAM( lParam ), GET_Y_LPARAM( lParam ) } );
+        break;
+
     case WM_DESTROY:
         PostQuitMessage(0);
         break;

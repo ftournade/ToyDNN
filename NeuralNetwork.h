@@ -14,7 +14,7 @@ public:
 				 const std::vector<Tensor>& _trainingSetExpectedOutput,
 				 const std::vector<Tensor>& _validationSet,
 				 const std::vector<Tensor>& _validationSetExpectedOutput,
-				 uint32_t _numEpochs, uint32_t _batchSize, float _learningRate );
+				 uint32_t _numEpochs, uint32_t _batchSize, float _learningRate, float _errorTarget = 0.0001f );
 	void Evaluate( const Tensor& _in, Tensor& _out ) const;
 
 	static void ComputeError( const Tensor& _out, const Tensor& _expectedOutput, Tensor& _error );
@@ -30,4 +30,5 @@ private:
 	std::vector< std::unique_ptr< Layer > > m_Layers;
 };
 
+uint32_t GetMostProbableClassIndex( const Tensor& _tensor );
 void Dump( const Tensor& t );

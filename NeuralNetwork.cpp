@@ -34,6 +34,23 @@ void Dump( const Tensor& t )
 	Log( "\n" );
 }
 
+uint32_t GetMostProbableClassIndex( const Tensor& _tensor )
+{
+	float best = -FLT_MAX;
+	uint32_t bestIdx;
+
+	for( int i = 0 ; i < _tensor.size() ; ++i )
+	{
+		if( _tensor[i] > best )
+		{
+			best = _tensor[i];
+			bestIdx = i;
+		}
+	}
+
+	return bestIdx;
+}
+
 void NeuralNetwork::AddLayer( std::unique_ptr<Layer> _layer ) 
 {
 	assert( m_Layers.empty() || (_layer->GetNumInputs() == m_Layers.back()->GetNumOutputs() ) );
@@ -46,7 +63,7 @@ float NeuralNetwork::Train( const std::vector<Tensor>& _trainingSet,
 							const std::vector<Tensor>& _trainingSetExpectedOutput,
 							const std::vector<Tensor>& _validationSet,
 							const std::vector<Tensor>& _validationSetExpectedOutput,
-							uint32_t _numEpochs, uint32_t _batchSize, float _learningRate )
+							uint32_t _numEpochs, uint32_t _batchSize, float _learningRate, float _errorTarget )
 {
 	assert( _trainingSet.size() == _trainingSetExpectedOutput.size() );
 	assert( _validationSet.size() == _validationSetExpectedOutput.size() );
@@ -88,6 +105,9 @@ float NeuralNetwork::Train( const std::vector<Tensor>& _trainingSet,
 			float validationSetError = ComputeError( _validationSet, _validationSetExpectedOutput );
 
 			Log( "Validation set error: %f\n", validationSetError );
+
+			if( validationSetError <= _errorTarget )
+				return error;
 		}
 	}
 
@@ -163,7 +183,13 @@ float NeuralNetwork::ComputeError( const Tensor& _out, const Tensor& _expectedOu
 
 float NeuralNetwork::ComputeError( const std::vector<Tensor>& _dataSet, const std::vector<Tensor>& _dataSetExpectedOutput )
 {
+#define classification_accurary
+
 	float error = 0.0f;
+	
+#ifdef classification_accurary
+	uint32_t validOutputCount = 0;
+#endif
 
 	#pragma omp parallel for reduction(+:error)
 	for( int i = 0 ; i < (int)_dataSet.size() ; ++i )
@@ -171,8 +197,13 @@ float NeuralNetwork::ComputeError( const std::vector<Tensor>& _dataSet, const st
 		Tensor out;
 		Evaluate( _dataSet[i], out );
 
-	#if 1 //Test
-		//if( i == 0 )
+	#ifdef classification_accurary
+		if( GetMostProbableClassIndex( _dataSetExpectedOutput[i] ) == GetMostProbableClassIndex( out ) )
+			++validOutputCount;
+	#endif
+
+	#if 0 //Test
+		if( i < 8 )
 		{
 			#define SX (178/2)
 			#define SY (218/2)
@@ -185,6 +216,10 @@ float NeuralNetwork::ComputeError( const std::vector<Tensor>& _dataSet, const st
 	#endif
 		error += ComputeError( out, _dataSetExpectedOutput[i] );
 	}
+
+#ifdef classification_accurary
+	Log( "accuracy: %.1f%%\n", 100.0f * (float)validOutputCount / (float)_dataSet.size() );
+#endif
 
 	return error / (float)_dataSet.size();
 }
