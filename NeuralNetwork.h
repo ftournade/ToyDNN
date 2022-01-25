@@ -9,6 +9,8 @@ class NeuralNetwork
 public:
 	void AddLayer( std::unique_ptr<Layer> _layer );
 
+	void Compile( uint32_t numInputs );
+
 	//Return error metric
 	float Train( const std::vector<Tensor>& _trainingSet,
 				 const std::vector<Tensor>& _trainingSetExpectedOutput,
@@ -20,6 +22,8 @@ public:
 	static void ComputeError( const Tensor& _out, const Tensor& _expectedOutput, Tensor& _error );
 	static float ComputeError( const Tensor& _out, const Tensor& _expectedOutput );
 	float ComputeError( const std::vector<Tensor>& _validationSet, const std::vector<Tensor>& _validationSetExpectedOutput );
+
+	const Layer* DbgGetLayer( uint32_t _idx ) const { return m_Layers[_idx].get(); }
 
 private:
 	void ClearWeightDeltas();

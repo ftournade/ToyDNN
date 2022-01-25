@@ -77,7 +77,8 @@ void BaseExample::PlotLearningCurve( HDC _hdc, const RECT& _r ) const
 
 Example1::Example1()
 {
-    net.AddLayer( std::make_unique<FullyConnectedLayer<Activation::Sigmoid>>( 2, 2 ) );
+    net.AddLayer( std::make_unique<FullyConnectedLayer<Activation::Sigmoid>>( 2 ) );
+    net.Compile( 2 );
 
     m_ExpectedOutput.push_back( { 0.666f, 0.333f } );
     m_Input.push_back( { 0.9f, 0.2f } );
@@ -109,8 +110,10 @@ void Example1::Tick( HDC _hdc )
 Example3::Example3()
 {
 
-    net.AddLayer( std::make_unique<FullyConnectedLayer<Activation::Relu>>( m_ImageRes * m_ImageRes, 2000 ) );
-    net.AddLayer( std::make_unique<FullyConnectedLayer<Activation::Sigmoid>>( 2000, 10 ) );
+    net.AddLayer( std::make_unique<Convolution2DLayer<Activation::Relu>>( m_ImageRes, m_ImageRes, m_NumFeatureMaps, m_KernelSize, m_Stride ) );
+    net.AddLayer( std::make_unique<FullyConnectedLayer<Activation::Relu>>( 400 ) );
+    net.AddLayer( std::make_unique<FullyConnectedLayer<Activation::Sigmoid>>( 10 ) );
+    net.Compile( m_ImageRes * m_ImageRes );
 
     if( !LoadMnistDataset( "D:\\Dev\\DeepLearning Datasets\\MNIST",
                            0.0f, 1.0f, 0, 0,
@@ -124,11 +127,11 @@ Example3::Example3()
 void Example3::Tick( HDC _hdc )
 {
     const int numEpochs = 100;
-    const float errorTarget = 0.08f;
+    const float errorTarget = 0.05f;
 
     if( !m_IsTrained )
     {
-        float error = net.Train( m_TrainingData, m_TrainingMetaData, m_ValidationData, m_ValidationMetaData, numEpochs, 1000, 0.001f, errorTarget );
+        float error = net.Train( m_TrainingData, m_TrainingMetaData, m_ValidationData, m_ValidationMetaData, numEpochs, 1000, 0.0001f, errorTarget );
 
         m_Epoch += numEpochs;
 
@@ -148,12 +151,15 @@ void Example3::Tick( HDC _hdc )
         char buffer[64];
         sprintf_s( buffer, "Recognized digit: %d", digit );
         DrawTextA( _hdc, buffer, -1, &r, DT_CENTER );
+    
+        DrawUserDrawnDigit( _hdc );
+    
+        DrawConvolutionLayerFeatures( _hdc, 3 );
     }
 
     RECT r{ 10,10,300,300 };
-    PlotLearningCurve( _hdc, r );
+  //  PlotLearningCurve( _hdc, r );
 
-    DrawUserDrawnDigit( _hdc );
 }
 
 void Example3::OnLMouseButtonDown( const POINT& p )
@@ -190,6 +196,39 @@ void Example3::OnMouseMove( const POINT& p )
 void Example3::OnRMouseButtonDown( const POINT& p )
 {
     std::fill( m_UserDrawnDigit.begin(), m_UserDrawnDigit.end(), 0.0f );
+}
+
+void Example3::DrawConvolutionLayerFeatures( HDC _hdc, uint32_t _zoom )
+{
+    uint32_t s = (m_ImageRes - m_KernelSize + 1) / (m_Stride * m_Stride);
+
+    const Tensor& convOutput = net.DbgGetLayer( 0 )->GetOutput();
+
+    for( uint32_t f = 0 ; f < m_NumFeatureMaps ; ++f )
+    {
+        for( uint32_t y = 0 ; y < s ; ++y )
+        {
+            for( uint32_t x = 0 ; x < s ; ++x )
+            {
+                float v = convOutput[ f * s * s + y * s + x ];
+                v = v * 255.0f;
+                v = min( v, 255.0f );
+                v = max( v, 0.0f );
+
+                DWORD col = RGB( (int)v, (int)v, (int)v );
+
+                for( uint32_t dy = 0 ; dy < _zoom ; ++dy )
+                {
+                    for( uint32_t dx = 0 ; dx < _zoom ; ++dx )
+                    {
+                        SetPixel( _hdc, x * _zoom + dx + f * (_zoom * s + 3), y * _zoom + dy, col );
+                    }
+                }
+
+            }
+        }
+    }
+
 }
 
 void Example3::DrawUserDrawnDigit( HDC _hdc )
@@ -233,8 +272,9 @@ Example4::Example4()
     if( halfRes )
         numImagePixels /= 4;
 
-    net.AddLayer( std::make_unique<FullyConnectedLayer<Activation::Relu>>( numImagePixels, numImagePixels / 8 ) );
-    net.AddLayer( std::make_unique<FullyConnectedLayer<Activation::Sigmoid>>( numImagePixels / 8, numImagePixels ) );
+    net.AddLayer( std::make_unique<FullyConnectedLayer<Activation::Relu>>( numImagePixels / 8 ) );
+    net.AddLayer( std::make_unique<FullyConnectedLayer<Activation::Sigmoid>>( numImagePixels ) );
+    net.Compile( numImagePixels );
 
     if( !LoadCelebADataset( "D:\\Dev\\DeepLearning Datasets\\CelebA", halfRes, 2.0f, 0.02f,
                             m_TrainingData, m_ValidationData, m_TrainingMetaData, m_ValidationMetaData ) )

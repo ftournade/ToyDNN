@@ -53,11 +53,20 @@ uint32_t GetMostProbableClassIndex( const Tensor& _tensor )
 
 void NeuralNetwork::AddLayer( std::unique_ptr<Layer> _layer ) 
 {
-	assert( m_Layers.empty() || (_layer->GetNumInputs() == m_Layers.back()->GetNumOutputs() ) );
-
 	m_Layers.push_back( std::move( _layer ) ); 
 }
 
+void NeuralNetwork::Compile( uint32_t _numInputs )
+{
+	assert( !m_Layers.empty() );
+
+	m_Layers[0]->Setup( _numInputs );
+
+	for( uint32_t i = 1 ; i < m_Layers.size() ; ++i )
+	{
+		m_Layers[i]->Setup( m_Layers[i - 1]->GetNumOutputs() );
+	}
+}
 
 float NeuralNetwork::Train( const std::vector<Tensor>& _trainingSet,
 							const std::vector<Tensor>& _trainingSetExpectedOutput,

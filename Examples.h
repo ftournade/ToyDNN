@@ -68,11 +68,14 @@ public:
 	virtual void OnMouseMove( const POINT& p ) override;
 
 private:
-
+	void DrawConvolutionLayerFeatures( HDC _hdc, uint32_t _zoom=1 );
 	void DrawUserDrawnDigit( HDC _dc );
 private:
 
 	static const uint32_t m_ImageRes = 28;
+	static const uint32_t m_NumFeatureMaps = 8;
+	static const uint32_t m_KernelSize = 5;
+	static const uint32_t m_Stride = 1;
 
 	bool m_IsTrained = false;
 
