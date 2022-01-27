@@ -136,7 +136,7 @@ void Example3::Tick( HDC _hdc )
     //Hyper parameters
     const int numEpochs = 1;
     const int batchSize = 32;
-    const int validationInterval = 300;
+    const int validationInterval = 100;
     const float learningRate = 0.0002f;
     const float errorTarget = 0.02f;
 
@@ -282,15 +282,14 @@ Example4::Example4()
 
     const bool halfRes = true;
 
-
-    uint32_t numImagePixels = 178 * 218;
+    TensorShape inputShape( 178, 218, 3 );
 
     if( halfRes )
-        numImagePixels /= 4;
+        inputShape = TensorShape( inputShape.m_SX / 2, inputShape.m_SY / 2, 3 );
 
-    net.AddLayer( std::make_unique<FullyConnectedLayer<Activation::Relu>>( numImagePixels / 8 ) );
-    net.AddLayer( std::make_unique<FullyConnectedLayer<Activation::Sigmoid>>( numImagePixels ) );
-    net.Compile( TensorShape( 178, 218, 1 ) ); //TODO RGB
+    net.AddLayer( std::make_unique<FullyConnectedLayer<Activation::Relu>>( inputShape.Size() / 12 ) );
+    net.AddLayer( std::make_unique<FullyConnectedLayer<Activation::Sigmoid>>( inputShape.Size() ) );
+    net.Compile( inputShape );
 
     if( !LoadCelebADataset( "D:\\Dev\\DeepLearning Datasets\\CelebA", halfRes, 2.0f, 0.02f,
                             m_TrainingData, m_ValidationData, m_TrainingMetaData, m_ValidationMetaData ) )
@@ -302,7 +301,7 @@ void Example4::Tick( HDC _hdc )
     //Hyper parameters
     const int numEpochs = 1;
     const int batchSize = 100;
-    const int validationInterval = 300;
+    const int validationInterval = 1;
     const float learningRate = 0.0002f;
     const float errorTarget = 0.04f;
 

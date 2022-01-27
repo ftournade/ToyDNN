@@ -225,9 +225,11 @@ float NeuralNetwork::ComputeError( const std::vector<Tensor>& _dataSet, const st
 			#define SY (218/2)
 			char buf[512];
 			sprintf_s( buf, "d:\\tmp\\vs%d_in.bmp", i );
-			WriteBMP( buf, true, _dataSet[i], SX, SY );
+			WriteBMP( buf, false, _dataSet[i], SX, SY );
 			sprintf_s( buf, "d:\\tmp\\vs%d_out.bmp", i );
-			WriteBMP( buf, true, out, SX, SY );
+			WriteBMP( buf, false, out, SX, SY );
+			#undef SX
+			#undef SY
 		}
 	#endif
 		error += ComputeError( out, _dataSetExpectedOutput[i] );

@@ -55,7 +55,7 @@ bool LoadJpeg( const char* _filename, bool _halfRes, bool _grayscale, Tensor& _p
 		}
 		else
 		{
-			_pixels.resize( rgbPixels.size() / 3 );
+			_pixels.resize( width * height );
 
 			for( uint32_t y = 0 ; y < height ; ++y )
 			{
@@ -68,7 +68,59 @@ bool LoadJpeg( const char* _filename, bool _halfRes, bool _grayscale, Tensor& _p
 	}
 	else
 	{
-		return false; //TODO
+		auto AddColor = [&]( uint32_t x, uint32_t y, float& r, float& g, float& b ) {
+			uint32_t idx = (y * width + x) * 3;
+			r += (float)rgbPixels[idx] / 255.0f;
+			g += (float)rgbPixels[idx+1] / 255.0f;
+			b += (float)rgbPixels[idx+2] / 255.0f;
+		};
+
+		if( _halfRes )
+		{
+			assert( (width % 2 == 0) && (height % 2 == 0) ); //TODO handle odd resolutions
+			uint32_t channelSize = width * height / 4;
+			_pixels.resize( channelSize * 3 );
+
+			for( uint32_t y = 0 ; y < height / 2 ; ++y )
+			{
+				for( uint32_t x = 0 ; x < width / 2 ; ++x )
+				{
+					//Average 4 pixels
+					float r = 0.0f, g = 0.0f, b = 0.0f;
+
+					AddColor( x * 2, y * 2, r, g, b );
+					
+					r *= 0.25f;
+					g *= 0.25f;
+					b *= 0.25f;
+
+					//Deinterlace RGB
+					_pixels[y * width / 2 + x] = r;
+					_pixels[channelSize + y * width / 2 + x] = g;
+					_pixels[channelSize * 2 + y * width / 2 + x] = b;
+				}
+			}
+		}
+		else
+		{
+			uint32_t channelSize = width * height;
+			_pixels.resize( channelSize * 3 );
+
+			for( uint32_t y = 0 ; y < height ; ++y )
+			{
+				for( uint32_t x = 0 ; x < width ; ++x )
+				{
+					float r = 0.0f, g = 0.0f, b = 0.0f;
+
+					AddColor( x, y, r, g, b );
+
+					//Deinterlace RGB
+					_pixels[y * width / 2 + x] = r;
+					_pixels[channelSize + y * width / 2 + x] = g;
+					_pixels[channelSize * 2 + y * width / 2 + x] = b;
+				}
+			}
+		}
 	}
 
 	return true;
@@ -88,6 +140,21 @@ bool WriteBMP( const char* _filename, bool _grayscale, const Tensor& _pixels, in
 			data[i * 3] = p;
 			data[i * 3 + 1] = p;
 			data[i * 3 + 2] = p;
+		}
+	}
+	else
+	{
+		uint32_t numPixels = _pixels.size() / 3;
+		data.resize( numPixels * 3 );
+
+		for( uint32_t i = 0 ; i < numPixels; ++i )
+		{
+			uint8_t r = (uint8_t)(_pixels[i] * 255.0f); //TODO saturate
+			uint8_t g = (uint8_t)(_pixels[i + numPixels] * 255.0f); //TODO saturate
+			uint8_t b = (uint8_t)(_pixels[i + numPixels*2] * 255.0f); //TODO saturate
+			data[i * 3] = b;
+			data[i * 3 + 1] = g;
+			data[i * 3 + 2] = r;
 		}
 	}
 
@@ -117,7 +184,7 @@ bool LoadCelebADataset( const char* _filepath,
 		char filename[1024];
 		sprintf_s( filename, "%s\\%06d.jpg", _filepath, _firstSample + i );
 
-		if( !LoadJpeg( filename, _halfRes, true, _data[i] ) )
+		if( !LoadJpeg( filename, _halfRes, false, _data[i] ) )
 			return false;
 
 		if( (i > 0) && (i % 50 == 0) )
