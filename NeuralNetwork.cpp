@@ -56,15 +56,15 @@ void NeuralNetwork::AddLayer( std::unique_ptr<Layer> _layer )
 	m_Layers.push_back( std::move( _layer ) ); 
 }
 
-void NeuralNetwork::Compile( uint32_t _numInputs )
+void NeuralNetwork::Compile( const TensorShape& _inputShape )
 {
 	assert( !m_Layers.empty() );
 
-	m_Layers[0]->Setup( _numInputs );
+	m_Layers[0]->Setup( _inputShape );
 
 	for( uint32_t i = 1 ; i < m_Layers.size() ; ++i )
 	{
-		m_Layers[i]->Setup( m_Layers[i - 1]->GetNumOutputs() );
+		m_Layers[i]->Setup( m_Layers[i - 1]->GetOutputShape() );
 	}
 }
 
@@ -72,7 +72,8 @@ float NeuralNetwork::Train( const std::vector<Tensor>& _trainingSet,
 							const std::vector<Tensor>& _trainingSetExpectedOutput,
 							const std::vector<Tensor>& _validationSet,
 							const std::vector<Tensor>& _validationSetExpectedOutput,
-							uint32_t _numEpochs, uint32_t _batchSize, float _learningRate, float _errorTarget )
+							uint32_t _numEpochs, uint32_t _batchSize, uint32_t _validationInterval, 
+							float _learningRate, float _errorTarget )
 {
 	assert( _trainingSet.size() == _trainingSetExpectedOutput.size() );
 	assert( _validationSet.size() == _validationSetExpectedOutput.size() );
@@ -107,16 +108,22 @@ float NeuralNetwork::Train( const std::vector<Tensor>& _trainingSet,
 			float elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() / 1000.0f;
 			
 			error /= batchSize;
-			Log( "epoch %d batch %d (%d samples) took %.1fs, error: %f\n", epoch, batch, batchSize, elapsedTime, error );
+			//Log( "epoch %d batch %d (%d samples) took %.1fs, error: %f\n", epoch, batch, batchSize, elapsedTime, error );
 
 			ApplyWeightDeltas( _learningRate/*TODO divide by batch size ?*/);
 
-			float validationSetError = ComputeError( _validationSet, _validationSetExpectedOutput );
+			//Every N batches or last batch of epoch
+			bool bEvaluateValidationSet = (batch % _validationInterval == 0) || (batch == (numTrainingSamples / _batchSize) - 1);
 
-			Log( "Validation set error: %f\n", validationSetError );
+			if( bEvaluateValidationSet )
+			{
+				float validationSetError = ComputeError( _validationSet, _validationSetExpectedOutput );
 
-			if( validationSetError <= _errorTarget )
-				return error;
+				Log( "Validation set error: %f\n", validationSetError );
+
+				if( validationSetError <= _errorTarget )
+					return error;
+			}
 		}
 	}
 

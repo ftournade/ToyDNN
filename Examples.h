@@ -74,7 +74,7 @@ private:
 
 	static const uint32_t m_ImageRes = 28;
 	static const uint32_t m_NumFeatureMaps = 8;
-	static const uint32_t m_KernelSize = 5;
+	static const uint32_t m_KernelSize = 3;
 	static const uint32_t m_Stride = 1;
 
 	bool m_IsTrained = false;
@@ -86,6 +86,7 @@ private:
 
 	const RECT m_UserDrawDigitRect = { 400, 400, 600, 600 };
 	Tensor m_UserDrawnDigit;
+	uint32_t m_RecognizedDigit = 0;
 };
 
 //Basic Encoder-decoder on celebA dataset

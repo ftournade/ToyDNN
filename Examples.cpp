@@ -78,7 +78,7 @@ void BaseExample::PlotLearningCurve( HDC _hdc, const RECT& _r ) const
 Example1::Example1()
 {
     net.AddLayer( std::make_unique<FullyConnectedLayer<Activation::Sigmoid>>( 2 ) );
-    net.Compile( 2 );
+    net.Compile( TensorShape( 2 ) );
 
     m_ExpectedOutput.push_back( { 0.666f, 0.333f } );
     m_Input.push_back( { 0.9f, 0.2f } );
@@ -93,9 +93,15 @@ Example1::Example1()
 
 void Example1::Tick( HDC _hdc )
 {
-    const int numEpochs = 10;
+    //Hyper parameters
+    const int numEpochs = 100;
+    const int batchSize = 1;
+    const int validationInterval = 300;
+    const float learningRate = 0.5;
+    const float errorTarget = 0.01f;
 
-    float error = net.Train( m_Input, m_ExpectedOutput, m_Input, m_ExpectedOutput, numEpochs, 1, 0.5f );
+
+    float error = net.Train( m_Input, m_ExpectedOutput, m_Input, m_ExpectedOutput, numEpochs, batchSize, validationInterval, learningRate );
      
     m_Epoch += numEpochs;
 
@@ -110,10 +116,11 @@ void Example1::Tick( HDC _hdc )
 Example3::Example3()
 {
 
-    net.AddLayer( std::make_unique<Convolution2DLayer<Activation::Relu>>( m_ImageRes, m_ImageRes, m_NumFeatureMaps, m_KernelSize, m_Stride ) );
+    net.AddLayer( std::make_unique<Convolution2DLayer<Activation::Relu>>( m_NumFeatureMaps, m_KernelSize, m_Stride ) );
+    net.AddLayer( std::make_unique<Convolution2DLayer<Activation::Relu>>( m_NumFeatureMaps * 2, m_KernelSize, m_Stride * 2 ) );
     net.AddLayer( std::make_unique<FullyConnectedLayer<Activation::Relu>>( 400 ) );
     net.AddLayer( std::make_unique<FullyConnectedLayer<Activation::Sigmoid>>( 10 ) );
-    net.Compile( m_ImageRes * m_ImageRes );
+    net.Compile( TensorShape( m_ImageRes, m_ImageRes, 1 ) );
 
     if( !LoadMnistDataset( "D:\\Dev\\DeepLearning Datasets\\MNIST",
                            0.0f, 1.0f, 0, 0,
@@ -126,12 +133,16 @@ Example3::Example3()
 
 void Example3::Tick( HDC _hdc )
 {
-    const int numEpochs = 100;
-    const float errorTarget = 0.05f;
+    //Hyper parameters
+    const int numEpochs = 1;
+    const int batchSize = 32;
+    const int validationInterval = 300;
+    const float learningRate = 0.0002f;
+    const float errorTarget = 0.02f;
 
     if( !m_IsTrained )
     {
-        float error = net.Train( m_TrainingData, m_TrainingMetaData, m_ValidationData, m_ValidationMetaData, numEpochs, 1000, 0.0001f, errorTarget );
+        float error = net.Train( m_TrainingData, m_TrainingMetaData, m_ValidationData, m_ValidationMetaData, numEpochs, batchSize, validationInterval, learningRate, errorTarget );
 
         m_Epoch += numEpochs;
 
@@ -142,19 +153,24 @@ void Example3::Tick( HDC _hdc )
     }
     else
     {
-        Tensor out;
-        net.Evaluate( m_UserDrawnDigit, out );
-        uint32_t digit = GetMostProbableClassIndex( out );
-
+        static uint32_t frame = 0;
+        
+        if( frame++ % 60 == 0 ) //Don't update every frame
+        {
+            Tensor out;
+            net.Evaluate( m_UserDrawnDigit, out );
+            m_RecognizedDigit = GetMostProbableClassIndex( out );
+        }
+        
         RECT r = { m_UserDrawDigitRect.left, m_UserDrawDigitRect.bottom, m_UserDrawDigitRect.right, m_UserDrawDigitRect.bottom + 30 };
 
         char buffer[64];
-        sprintf_s( buffer, "Recognized digit: %d", digit );
+        sprintf_s( buffer, "Recognized digit: %d", m_RecognizedDigit );
         DrawTextA( _hdc, buffer, -1, &r, DT_CENTER );
     
         DrawUserDrawnDigit( _hdc );
     
-        DrawConvolutionLayerFeatures( _hdc, 3 );
+      //  DrawConvolutionLayerFeatures( _hdc, 3 ); //SLOW
     }
 
     RECT r{ 10,10,300,300 };
@@ -274,7 +290,7 @@ Example4::Example4()
 
     net.AddLayer( std::make_unique<FullyConnectedLayer<Activation::Relu>>( numImagePixels / 8 ) );
     net.AddLayer( std::make_unique<FullyConnectedLayer<Activation::Sigmoid>>( numImagePixels ) );
-    net.Compile( numImagePixels );
+    net.Compile( TensorShape( 178, 218, 1 ) ); //TODO RGB
 
     if( !LoadCelebADataset( "D:\\Dev\\DeepLearning Datasets\\CelebA", halfRes, 2.0f, 0.02f,
                             m_TrainingData, m_ValidationData, m_TrainingMetaData, m_ValidationMetaData ) )
@@ -283,5 +299,12 @@ Example4::Example4()
 
 void Example4::Tick( HDC _hdc )
 {
-    net.Train( m_TrainingData, m_TrainingData, m_ValidationData, m_ValidationData, 1, 50, 0.0002f );
+    //Hyper parameters
+    const int numEpochs = 1;
+    const int batchSize = 100;
+    const int validationInterval = 300;
+    const float learningRate = 0.0002f;
+    const float errorTarget = 0.04f;
+
+    net.Train( m_TrainingData, m_TrainingData, m_ValidationData, m_ValidationData, numEpochs, batchSize, validationInterval, learningRate, errorTarget );
 }

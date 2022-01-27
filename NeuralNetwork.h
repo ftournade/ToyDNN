@@ -9,14 +9,15 @@ class NeuralNetwork
 public:
 	void AddLayer( std::unique_ptr<Layer> _layer );
 
-	void Compile( uint32_t numInputs );
+	void Compile( const TensorShape& _inputShape );
 
 	//Return error metric
 	float Train( const std::vector<Tensor>& _trainingSet,
 				 const std::vector<Tensor>& _trainingSetExpectedOutput,
 				 const std::vector<Tensor>& _validationSet,
 				 const std::vector<Tensor>& _validationSetExpectedOutput,
-				 uint32_t _numEpochs, uint32_t _batchSize, float _learningRate, float _errorTarget = 0.0001f );
+				 uint32_t _numEpochs, uint32_t _batchSize, uint32_t _validationInterval /*evaluate vaildationSet every N batch*/,
+				 float _learningRate, float _errorTarget = 0.0001f );
 	void Evaluate( const Tensor& _in, Tensor& _out ) const;
 
 	static void ComputeError( const Tensor& _out, const Tensor& _expectedOutput, Tensor& _error );

@@ -18,22 +18,33 @@ inline float Random( float _min, float _max )
 	return Lerp( u, _min, _max );
 }
 
+class TensorShape
+{
+public:
+	inline TensorShape() : m_SX( 0 ), m_SY( 0 ), m_SZ( 0 ) {}
+	inline TensorShape( uint32_t _sx, uint32_t _sy=1, uint32_t _sz=1 ) : m_SX(_sx), m_SY(_sy), m_SZ(_sz) {}
+	inline uint32_t Size() const { return m_SX * m_SY * m_SZ; }
+	inline uint32_t Index( uint32_t _x, uint32_t _y, uint32_t _z ) const { return m_SX * ( m_SY * _z + _y ) + _x; }
+
+	uint32_t m_SX, m_SY, m_SZ;
+};
+
 class Layer
 {
 public:
-	Layer() : m_NumInputs( 0 ),	m_NumOutputs( 0 ) {}
+	Layer() {}
 	virtual ~Layer() {}
-	virtual void Setup( uint32_t _previousLayerNumOutputs ) = 0;
+	virtual void Setup( const TensorShape& _previousLayerOutputShape ) = 0;
 	virtual void Forward( const Tensor& _in, Tensor& _out ) = 0;
 	virtual void ClearWeightDeltas() = 0;
 	virtual void ApplyWeightDeltas( float _learningRate ) = 0;
 	virtual void BackPropagation( const Tensor& _layerInputs, const Tensor& _outputGradients/*in*/, Tensor& _inputGradients /*out*/) = 0;
 	virtual const Tensor& GetOutput() const = 0;
 
-	inline uint32_t GetNumInputs() const { return m_NumInputs; }
-	inline uint32_t GetNumOutputs() const { return m_NumOutputs; }
+	inline const TensorShape& GetInputShape() const { return m_InputShape; }
+	inline const TensorShape& GetOutputShape() const { return m_OutputShape; }
 protected:
-	uint32_t m_NumInputs, m_NumOutputs;
+	TensorShape m_InputShape, m_OutputShape;
 
 };
 
@@ -43,25 +54,24 @@ class FullyConnectedLayer : public Layer
 public:
 	FullyConnectedLayer( uint32_t _numNeurons )
 	{
-		m_NumOutputs = _numNeurons;
+		m_OutputShape = TensorShape( _numNeurons, 1, 1 );
 	}
 
-	virtual void Setup( uint32_t _previousLayerNumOutputs ) override 
+	virtual void Setup( const TensorShape& _previousLayerOutputShape ) override 
 	{
+		m_InputShape = TensorShape( _previousLayerOutputShape.Size(), 1, 1 ); //Flatten the input tensor
 
-		m_NumInputs = _previousLayerNumOutputs;
+		m_Weights.resize( m_InputShape.m_SX * m_OutputShape.m_SX );
+		m_DeltaWeights.resize( m_Weights.size() );
 
-		m_Weights.resize( m_NumInputs * m_NumOutputs );
-		m_DeltaWeights.resize( m_NumInputs * m_NumOutputs );
+		m_Biases.resize( m_OutputShape.m_SX );
+		m_DeltaBiases.resize( m_OutputShape.m_SX );
 
-		m_Biases.resize( m_NumOutputs );
-		m_DeltaBiases.resize( m_NumOutputs );
-
-		m_NetInputs.resize( m_NumOutputs );
-		m_Activations.resize( m_NumOutputs );
+		m_NetInputs.resize( m_OutputShape.m_SX );
+		m_Activations.resize( m_OutputShape.m_SX );
 
 		// https://machinelearningmastery.com/weight-initialization-for-deep-learning-neural-networks/#:~:text=each%20in%20turn.-,Xavier%20Weight%20Initialization,of%20inputs%20to%20the%20node.&text=We%20can%20implement%20this%20directly%20in%20Python.
-		float xavierWeightRange = 1.0f / sqrtf( (float)m_NumInputs );
+		float xavierWeightRange = 1.0f / sqrtf( (float)m_InputShape.m_SX );
 
 		std::generate( m_Weights.begin(), m_Weights.end(), [&]() { return Random( -xavierWeightRange, xavierWeightRange ); } );
 		std::fill( m_Biases.begin(), m_Biases.end(), 0.0f );
@@ -69,16 +79,16 @@ public:
 
 	virtual void Forward( const Tensor& _in, Tensor& _out ) override
 	{
-		_out.resize( m_NumOutputs );
+		_out.resize( m_OutputShape.m_SX );
 
 		#pragma omp parallel for
-		for( int i = 0 ; i < (int)m_NumOutputs ; ++i )
+		for( int i = 0 ; i < (int)m_OutputShape.m_SX ; ++i )
 		{
 			float netSum = m_Biases[i];
 
-			uint32_t weightIdx = i * m_NumInputs;
+			uint32_t weightIdx = i * m_InputShape.m_SX;
 
-			for( uint32_t j = 0 ; j < m_NumInputs ; ++j )
+			for( uint32_t j = 0 ; j < m_InputShape.m_SX ; ++j )
 			{
 				netSum += _in[j] * m_Weights[weightIdx + j];
 			}
@@ -102,35 +112,35 @@ public:
 	virtual void ApplyWeightDeltas( float _learningRate ) override
 	{
 		#pragma omp parallel for
-		for( int i = 0 ; i < (int)m_NumOutputs ; ++i )
+		for( int i = 0 ; i < (int)m_OutputShape.m_SX ; ++i )
 		{
 			m_Biases[i] -= _learningRate * m_DeltaBiases[i];
 
-			for( uint32_t j = 0 ; j < m_NumInputs ; ++j )
+			for( uint32_t j = 0 ; j < m_InputShape.m_SX ; ++j )
 			{
-				m_Weights[j + i * m_NumInputs] -= _learningRate * m_DeltaWeights[j + i * m_NumInputs];
+				m_Weights[j + i * m_InputShape.m_SX] -= _learningRate * m_DeltaWeights[j + i * m_InputShape.m_SX];
 			}
 		}
 	}
 
 	virtual void BackPropagation( const Tensor& _layerInputs, const Tensor& _outputGradients, Tensor& _inputGradients ) override
 	{
-		_inputGradients.resize( m_NumInputs, 0.0f );
+		_inputGradients.resize( m_InputShape.m_SX, 0.0f );
 
 		#pragma omp parallel for
-		for( int i = 0 ; i < (int)m_NumOutputs ; ++i )
+		for( int i = 0 ; i < (int)m_OutputShape.m_SX ; ++i )
 		{
 			float dA_dN = Activation::ComputeDerivative( m_NetInputs[i], m_Activations[i] );
 			float dE_dN = _outputGradients[i] * dA_dN;
 
 			m_DeltaBiases[i] += dE_dN; /*dN_dB is ignored because it is 1*/
 
-			for( uint32_t j = 0 ; j < m_NumInputs ; ++j )
+			for( uint32_t j = 0 ; j < m_InputShape.m_SX ; ++j )
 			{
 				float dN_dW = _layerInputs[j];
-				m_DeltaWeights[j + i * m_NumInputs] += dE_dN * dN_dW;
+				m_DeltaWeights[j + i * m_InputShape.m_SX] += dE_dN * dN_dW;
 				
-				_inputGradients[j] += dE_dN * m_Weights[j + i * m_NumInputs];
+				_inputGradients[j] += dE_dN * m_Weights[j + i * m_InputShape.m_SX];
 			}
 			
 		}
@@ -152,27 +162,26 @@ template <typename Activation>
 class Convolution2DLayer : public Layer
 {
 public:
-	Convolution2DLayer( uint32_t _inputSizeX, uint32_t _inputSizeY, uint32_t _numFeatureMaps, uint32_t _kernelSize, uint32_t _stride=1 ) 
-	: m_InputSizeX(_inputSizeX), m_InputSizeY(_inputSizeY), m_NumFeatureMaps(_numFeatureMaps), m_KernelSize(_kernelSize), m_Stride(_stride) 
+	Convolution2DLayer( uint32_t _numFeatureMaps, uint32_t _kernelSize, uint32_t _stride=1 ) 
+	: m_NumFeatureMaps(_numFeatureMaps), m_KernelSize(_kernelSize), m_Stride(_stride) 
 	{}
 
-	virtual void Setup( uint32_t _previousLayerNumOutputs ) override
+	virtual void Setup( const TensorShape& _previousLayerOutputShape ) override
 	{
-		assert( _previousLayerNumOutputs % m_InputSizeX == 0 );
-		assert( m_InputSizeX * m_InputSizeY == _previousLayerNumOutputs );
-
-		m_NumInputs = _previousLayerNumOutputs;
-		m_NumOutputs = (m_InputSizeX - m_KernelSize + 1) * (m_InputSizeY - m_KernelSize + 1) / (m_Stride * m_Stride);
-		m_NumOutputs *= m_NumFeatureMaps;
-
-		m_Weights.resize( m_NumFeatureMaps * m_KernelSize * m_KernelSize );
-		m_DeltaWeights.resize( m_NumFeatureMaps * m_KernelSize * m_KernelSize );
+		m_InputShape = _previousLayerOutputShape;
+		m_OutputShape = TensorShape(	(m_InputShape.m_SX - m_KernelSize + 1) / m_Stride,
+										(m_InputShape.m_SY - m_KernelSize + 1) / m_Stride,
+										m_NumFeatureMaps );
+		
+		m_KernelShape = TensorShape( m_KernelSize, m_KernelSize, m_InputShape.m_SZ );
+		m_Weights.resize( m_NumFeatureMaps * m_KernelShape.Size() );
+		m_DeltaWeights.resize( m_Weights.size() );
 
 		m_Biases.resize( m_NumFeatureMaps );
 		m_DeltaBiases.resize( m_NumFeatureMaps );
 
-		m_NetInputs.resize( m_NumOutputs );
-		m_Activations.resize( m_NumOutputs );
+		m_NetInputs.resize( m_OutputShape.Size() );
+		m_Activations.resize( m_OutputShape.Size() );
 
 		std::generate( m_Weights.begin(), m_Weights.end(), [&]() { return Random( -1.0f, 1.0f ); } );
 		std::fill( m_Biases.begin(), m_Biases.end(), 0.0f );
@@ -180,43 +189,45 @@ public:
 
 	virtual void Forward( const Tensor& _in, Tensor& _out ) override
 	{
-
-		uint32_t outSx = (m_InputSizeX - m_KernelSize + 1) / (m_Stride * m_Stride);
-		uint32_t outSy = (m_InputSizeY - m_KernelSize + 1) / (m_Stride * m_Stride);
-
-		_out.resize( m_NumOutputs );
+		_out.resize( m_OutputShape.Size() );
 		//std::fill( _out.begin(), _out.end(), 0.0f );
 		
-		float* accum = (float*)alloca( sizeof(float) * m_NumFeatureMaps );
+		float* accum = (float*)alloca( sizeof(float) * m_OutputShape.m_SZ );
 
-		for( uint32_t y = 0 ; y < outSy ; ++y )
+		for( uint32_t y = 0 ; y < m_OutputShape.m_SY ; ++y )
 		{
-			for( uint32_t x = 0 ; x < outSx ; ++x )
+			for( uint32_t x = 0 ; x < m_OutputShape.m_SX ; ++x )
 			{
-				for( uint32_t f = 0 ; f < m_NumFeatureMaps ; ++f )
+				for( uint32_t f = 0 ; f < m_OutputShape.m_SZ ; ++f )
 				{
 					accum[f] = m_Biases[f];
 				}
 
-				for( uint32_t ky = 0 ; ky < m_KernelSize ; ++ky )
+				for( uint32_t kz = 0 ; kz < m_InputShape.m_SZ ; ++kz )
 				{
-					uint32_t sy = y * m_Stride + ky;
-					
-					for( uint32_t kx = 0 ; kx < m_KernelSize ; ++kx )
+					for( uint32_t ky = 0 ; ky < m_KernelSize ; ++ky )
 					{
-						uint32_t sx = x * m_Stride + kx;
+						uint32_t sy = y * m_Stride + ky;
 
-						for( uint32_t f = 0 ; f < m_NumFeatureMaps ; ++f )
+						for( uint32_t kx = 0 ; kx < m_KernelSize ; ++kx )
 						{
-							accum[f] += _in[sy * m_InputSizeX + sx] * m_Weights[ f * m_KernelSize * m_KernelSize + ky * m_KernelSize + kx ];
+							uint32_t sx = x * m_Stride + kx;
+
+							for( uint32_t f = 0 ; f < m_NumFeatureMaps ; ++f )
+							{
+								uint32_t inIdx = m_InputShape.Index( sx, sy, kz );
+								uint32_t weightIdx = m_KernelShape.Size() * f + m_KernelShape.Index( kx, ky, kz );
+
+								accum[f] += _in[inIdx] * m_Weights[weightIdx];
+							}
 						}
 					}
 				}
-				
+
 				for( uint32_t f = 0 ; f < m_NumFeatureMaps ; ++f )
 				{
-					float output = Activation::Compute( accum[f]);
-					uint32_t outIdx = f * outSx* outSy + y * outSx + x;
+					float output = Activation::Compute( accum[f] );
+					uint32_t outIdx = m_OutputShape.Index( x, y, f );
 					
 					_out[outIdx] = output;
 				
@@ -251,41 +262,44 @@ public:
 
 	virtual void BackPropagation( const Tensor& _layerInputs, const Tensor& _outputGradients, Tensor& _inputGradients ) override
 	{
-		uint32_t outSx = (m_InputSizeX - m_KernelSize + 1) / (m_Stride * m_Stride);
-		uint32_t outSy = (m_InputSizeY - m_KernelSize + 1) / (m_Stride * m_Stride);
 
-		_inputGradients.resize( m_NumInputs, 0.0f );
+		_inputGradients.resize( m_InputShape.Size(), 0.0f );
 
-		for( uint32_t y = 0 ; y < outSy ; ++y )
+		float* dE_dN = (float*)alloca( sizeof( float ) * m_OutputShape.m_SZ );
+
+		for( uint32_t y = 0 ; y < m_OutputShape.m_SY ; ++y )
 		{
-			for( uint32_t x = 0 ; x < outSx ; ++x )
+			for( uint32_t x = 0 ; x < m_OutputShape.m_SX ; ++x )
 			{
-				uint32_t outIdx = x + y * outSx;
-				float dA_dN = Activation::ComputeDerivative( m_NetInputs[outIdx], m_Activations[outIdx] );
-				float dE_dN = _outputGradients[outIdx] * dA_dN;
-
-				for( uint32_t f = 0 ; f < m_NumFeatureMaps ; ++f )
+				for( uint32_t f = 0 ; f < m_OutputShape.m_SZ ; ++f )
 				{
-					m_DeltaBiases[f] += dE_dN; //dN_dB is ignored because it is 1
+					uint32_t outIdx = m_OutputShape.Index( x, y, f );
+					float dA_dN = Activation::ComputeDerivative( m_NetInputs[outIdx], m_Activations[outIdx] );
+					dE_dN[f] = _outputGradients[outIdx] * dA_dN;
+
+					m_DeltaBiases[f] += dE_dN[f]; //dN_dB is ignored because it is 1
 				}
 
-				for( uint32_t ky = 0 ; ky < m_KernelSize ; ++ky )
+				for( uint32_t kz = 0 ; kz < m_InputShape.m_SZ ; ++kz )
 				{
-					uint32_t sy = y * m_Stride + ky;
-
-					for( uint32_t kx = 0 ; kx < m_KernelSize ; ++kx )
+					for( uint32_t ky = 0 ; ky < m_KernelSize ; ++ky )
 					{
-						uint32_t sx = x * m_Stride + kx;
+						uint32_t sy = y * m_Stride + ky;
 
-						for( uint32_t f = 0 ; f < m_NumFeatureMaps ; ++f )
+						for( uint32_t kx = 0 ; kx < m_KernelSize ; ++kx )
 						{
+							uint32_t sx = x * m_Stride + kx;
 
-							uint32_t weightIdx = f * m_KernelSize * m_KernelSize + ky * m_KernelSize + kx;
+							for( uint32_t f = 0 ; f < m_NumFeatureMaps ; ++f )
+							{
+								uint32_t inIdx = m_InputShape.Index( sx, sy, kz );
+								uint32_t weightIdx = m_KernelShape.Size() * f + m_KernelShape.Index( kx, ky, kz );
 
-							float dN_dW = _layerInputs[sy * m_InputSizeX + sx];
-							m_DeltaWeights[weightIdx] += dE_dN * dN_dW;
+								float dN_dW = _layerInputs[inIdx];
+								m_DeltaWeights[weightIdx] += dE_dN[f] * dN_dW;
 
-							_inputGradients[sy * m_InputSizeX + sx] += dE_dN * m_Weights[weightIdx];
+								_inputGradients[inIdx] += dE_dN[f] * m_Weights[weightIdx];
+							}
 						}
 					}
 				}
@@ -297,7 +311,8 @@ public:
 	virtual const Tensor& GetOutput() const override { return m_Activations; }
 
 private:
-	uint32_t m_InputSizeX, m_InputSizeY, m_NumFeatureMaps, m_KernelSize, m_Stride;
+	uint32_t m_NumFeatureMaps, m_KernelSize, m_Stride;
+	TensorShape m_KernelShape;
 
 	std::vector<float> m_Weights;
 	std::vector<float> m_Biases;
@@ -306,4 +321,3 @@ private:
 	Tensor m_NetInputs;
 	Tensor m_Activations;
 };
-
