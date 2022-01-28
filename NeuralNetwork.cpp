@@ -259,6 +259,8 @@ namespace ToyDNN
 		outputGradients[0].resize( numOutputs );
 		const Tensor& output = m_Layers[m_Layers.size() - 1]->GetOutput();
 
+		assert( numOutputs == output.size() );
+
 		for( uint32_t i = 0 ; i < numOutputs ; ++i )
 		{
 			//TODO make choice of Cost function a paramater to the network
@@ -295,8 +297,8 @@ namespace ToyDNN
 	{
 		assert( _dataSet.size() == _dataSetExpectedOutput.size() );
 
-		const Scalar epsilon = Scalar(1e-5);
-		const Scalar gradientTolerance = Scalar(1e-5);
+		const Scalar epsilon = Scalar(1e-8);
+		const Scalar gradientTolerance = Scalar(0.1);
 
 		//Evaluate gradients through with back propagation
 
@@ -337,10 +339,13 @@ namespace ToyDNN
 			//Compute gradient
 			Scalar groundThruthGradient = (error1 - error2) / (2.0f * epsilon);
 
-			if( std::abs( backPropGradient - groundThruthGradient ) > gradientTolerance )
+			Scalar gradientError = std::abs( (backPropGradient - groundThruthGradient) / groundThruthGradient );
+
+			if( gradientError > gradientTolerance )
 			{
 			//	assert( false );
-				Log( "Bad gradient (%f != %f, ratio=%f) found in layer %d. Probably a back propagation bug !\n", backPropGradient, groundThruthGradient, backPropGradient / groundThruthGradient, randomLayer );
+				Log( "Bad gradient (%f != %f, error=%.3f%%) found in layer %d. Probably a back propagation bug !\n", 
+					 backPropGradient, groundThruthGradient, 100.0f * gradientError, randomLayer );
 			}
 
 			//restore the parameter
