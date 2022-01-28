@@ -71,7 +71,7 @@ namespace ToyDNN
 	class LeakyRelu : public BaseActivationLayer
 	{
 	public:
-		LeakyRelu( float _leak ) : m_Leak( _leak )
+		LeakyRelu( float _leak=0.01f) : m_Leak( _leak )
 		{
 			assert( _leak > 0.0f );
 		}
@@ -196,4 +196,53 @@ namespace ToyDNN
 		}
 	};
 
+	class SoftMax : public BaseActivationLayer
+	{
+	public:
+		virtual void Forward( const Tensor& _in, Tensor& _out ) const override
+		{
+			uint32_t n = m_OutputShape.Size();
+			_out.resize( n );
+
+			float alpha = *std::max_element( _in.begin(), _in.end() );
+			float denominator = 0;
+
+			for( int i = 0; i < n; i++ )
+			{
+				_out[i] = std::exp( _in[i] - alpha );
+				denominator += _out[i];
+			}
+
+			float numerator = 1.0f / denominator;
+
+			for( int i = 0; i < n; i++ )
+			{
+				_out[i] *= numerator;
+				m_Activations[i] = _out[i];
+			}
+		}
+
+		virtual void BackPropagation( const Tensor& _layerInputs, const Tensor& _outputGradients, Tensor& _inputGradients ) override
+		{
+			uint32_t n = m_OutputShape.Size();
+			_inputGradients.resize( n );
+
+			float* df = (float*)alloca( sizeof( float ) * n );
+			memset( df, 0, sizeof( float ) * n );
+
+			for( int j=0; j < n ; ++j )
+			{
+				for( int k=0; k < n ; ++k )
+				{
+					float f = (k == j) ? 1.0f : 0.0f;
+					df[k] = m_Activations[j] * (f - m_Activations[j]);
+				}
+
+				for( int k = 0; k < n ; ++k )
+				{
+					_inputGradients[j] += _outputGradients[k] * df[k];
+				}
+			}
+		}
+	};
 }

@@ -116,6 +116,8 @@ void Example1::Tick( HDC _hdc )
 
 Example3::Example3()
 {
+    srand( 111 );
+
 #ifdef USE_CIFAR10_INSTEAD_OF_MNIST
     uint32_t numChannels = 3;
 #else
@@ -131,7 +133,7 @@ Example3::Example3()
     net.AddLayer( new FullyConnected( 400 ) );
     net.AddLayer( new Relu() );
     net.AddLayer( new FullyConnected( 10 ) );
-    net.AddLayer( new Sigmoid() );
+    net.AddLayer( new SoftMax() );
     net.Compile( TensorShape( m_ImageRes, m_ImageRes, numChannels ) );
 
 #ifdef USE_CIFAR10_INSTEAD_OF_MNIST
@@ -154,7 +156,7 @@ void Example3::Tick( HDC _hdc )
     const int numEpochs = 1;
     const int batchSize = 32;
     const int validationInterval = 100;
-    const float learningRate = 0.0002f;
+    const float learningRate = 0.0001f;
     const float errorTarget = 0.02f;
 
     if( !m_IsTrained )
