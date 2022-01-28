@@ -1,222 +1,178 @@
-// ToyDNN.cpp : Defines the entry point for the application.
+
+// ToyDNN.cpp : Defines the class behaviors for the application.
 //
 
+#include "pch.h"
 #include "framework.h"
+#include "afxwinappex.h"
+#include "afxdialogex.h"
 #include "ToyDNN.h"
+#include "MainFrm.h"
 
-#include "Examples.h"
-#include "Util.h"
 
-#include <Windowsx.h>
+#ifdef _DEBUG
+#define new DEBUG_NEW
+#endif
 
-#define MAX_LOADSTRING 100
 
-// Global Variables:
-HINSTANCE hInst;                                // current instance
-WCHAR szTitle[MAX_LOADSTRING];                  // The title bar text
-WCHAR szWindowClass[MAX_LOADSTRING];            // the main window class name
+// CToyDNNApp
 
-// Forward declarations of functions included in this code module:
-ATOM                MyRegisterClass(HINSTANCE hInstance);
-BOOL                InitInstance(HINSTANCE, int);
-LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
-INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
+BEGIN_MESSAGE_MAP(CToyDNNApp, CWinAppEx)
+	ON_COMMAND(ID_APP_ABOUT, &CToyDNNApp::OnAppAbout)
+END_MESSAGE_MAP()
 
-std::unique_ptr<BaseExample> g_example;
 
-void InitExampleNetwork()
+// CToyDNNApp construction
+
+CToyDNNApp::CToyDNNApp() noexcept
 {
-    g_example = std::make_unique<Example3>();
+	m_bHiColorIcons = TRUE;
+
+
+	// TODO: replace application ID string below with unique ID string; recommended
+	// format for string is CompanyName.ProductName.SubProduct.VersionInformation
+	SetAppID(_T("ToyDNN.AppID.NoVersion"));
+
+	// TODO: add construction code here,
+	// Place all significant initialization in InitInstance
 }
 
-int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
-                     _In_opt_ HINSTANCE hPrevInstance,
-                     _In_ LPWSTR    lpCmdLine,
-                     _In_ int       nCmdShow)
+// The one and only CToyDNNApp object
+
+CToyDNNApp theApp;
+
+
+// CToyDNNApp initialization
+
+BOOL CToyDNNApp::InitInstance()
 {
-    UNREFERENCED_PARAMETER(hPrevInstance);
-    UNREFERENCED_PARAMETER(lpCmdLine);
+	// InitCommonControlsEx() is required on Windows XP if an application
+	// manifest specifies use of ComCtl32.dll version 6 or later to enable
+	// visual styles.  Otherwise, any window creation will fail.
+	INITCOMMONCONTROLSEX InitCtrls;
+	InitCtrls.dwSize = sizeof(InitCtrls);
+	// Set this to include all the common control classes you want to use
+	// in your application.
+	InitCtrls.dwICC = ICC_WIN95_CLASSES;
+	InitCommonControlsEx(&InitCtrls);
 
-    try
-    {
-        InitExampleNetwork();
-    }
-    catch( std::exception e )
-    {
-        Log( "error: %s - exiting\n", e.what());
-        return -1;
-    }
+	CWinAppEx::InitInstance();
 
-    // Initialize global strings
-    LoadStringW(hInstance, IDS_APP_TITLE, szTitle, MAX_LOADSTRING);
-    LoadStringW(hInstance, IDC_TOYDNN, szWindowClass, MAX_LOADSTRING);
-    MyRegisterClass(hInstance);
 
-    // Perform application initialization:
-    if (!InitInstance (hInstance, nCmdShow))
-    {
-        return FALSE;
-    }
+	EnableTaskbarInteraction(FALSE);
 
-    HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_TOYDNN));
+	// AfxInitRichEdit2() is required to use RichEdit control
+	// AfxInitRichEdit2();
 
-    MSG msg;
+	// Standard initialization
+	// If you are not using these features and wish to reduce the size
+	// of your final executable, you should remove from the following
+	// the specific initialization routines you do not need
+	// Change the registry key under which our settings are stored
+	// TODO: You should modify this string to be something appropriate
+	// such as the name of your company or organization
+	SetRegistryKey(_T("Local AppWizard-Generated Applications"));
 
-    // Main message loop:
-    while (GetMessage(&msg, nullptr, 0, 0))
-    {
-        if (!TranslateAccelerator(msg.hwnd, hAccelTable, &msg))
-        {
-            TranslateMessage(&msg);
-            DispatchMessage(&msg);
-        }
-    }
 
-    return (int) msg.wParam;
+	InitContextMenuManager();
+
+	InitKeyboardManager();
+
+	InitTooltipManager();
+	CMFCToolTipInfo ttParams;
+	ttParams.m_bVislManagerTheme = TRUE;
+	theApp.GetTooltipManager()->SetTooltipParams(AFX_TOOLTIP_TYPE_ALL,
+		RUNTIME_CLASS(CMFCToolTipCtrl), &ttParams);
+
+	// To create the main window, this code creates a new frame window
+	// object and then sets it as the application's main window object
+	CFrameWnd* pFrame = new CMainFrame;
+	if (!pFrame)
+		return FALSE;
+	m_pMainWnd = pFrame;
+	// create and load the frame with its resources
+	pFrame->LoadFrame(IDR_MAINFRAME,
+		WS_OVERLAPPEDWINDOW | FWS_ADDTOTITLE, nullptr,
+		nullptr);
+
+
+
+
+
+	// The one and only window has been initialized, so show and update it
+	pFrame->ShowWindow(SW_SHOWMAXIMIZED);
+	pFrame->UpdateWindow();
+	return TRUE;
 }
 
-
-
-//
-//  FUNCTION: MyRegisterClass()
-//
-//  PURPOSE: Registers the window class.
-//
-ATOM MyRegisterClass(HINSTANCE hInstance)
+int CToyDNNApp::ExitInstance()
 {
-    WNDCLASSEXW wcex;
-
-    wcex.cbSize = sizeof(WNDCLASSEX);
-
-    wcex.style          = CS_HREDRAW | CS_VREDRAW;
-    wcex.lpfnWndProc    = WndProc;
-    wcex.cbClsExtra     = 0;
-    wcex.cbWndExtra     = 0;
-    wcex.hInstance      = hInstance;
-    wcex.hIcon          = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_TOYDNN));
-    wcex.hCursor        = LoadCursor(nullptr, IDC_ARROW);
-    wcex.hbrBackground  = (HBRUSH)(COLOR_WINDOW+1);
-    wcex.lpszMenuName   = MAKEINTRESOURCEW(IDC_TOYDNN);
-    wcex.lpszClassName  = szWindowClass;
-    wcex.hIconSm        = LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
-
-    return RegisterClassExW(&wcex);
+	//TODO: handle additional resources you may have added
+	return CWinAppEx::ExitInstance();
 }
 
-//
-//   FUNCTION: InitInstance(HINSTANCE, int)
-//
-//   PURPOSE: Saves instance handle and creates main window
-//
-//   COMMENTS:
-//
-//        In this function, we save the instance handle in a global variable and
-//        create and display the main program window.
-//
-BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
+// CToyDNNApp message handlers
+
+
+// CAboutDlg dialog used for App About
+
+class CAboutDlg : public CDialogEx
 {
-   hInst = hInstance; // Store instance handle in our global variable
+public:
+	CAboutDlg() noexcept;
 
-   HWND hWnd = CreateWindowW(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
-      CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, nullptr, nullptr, hInstance, nullptr);
+// Dialog Data
+#ifdef AFX_DESIGN_TIME
+	enum { IDD = IDD_ABOUTBOX };
+#endif
 
-   if (!hWnd)
-   {
-      return FALSE;
-   }
+protected:
+	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
 
-   g_example->SetHwnd( hWnd );
+// Implementation
+protected:
+	DECLARE_MESSAGE_MAP()
+};
 
-   ShowWindow(hWnd, nCmdShow);
-   UpdateWindow(hWnd);
-
-   return TRUE;
+CAboutDlg::CAboutDlg() noexcept : CDialogEx(IDD_ABOUTBOX)
+{
 }
 
-//
-//  FUNCTION: WndProc(HWND, UINT, WPARAM, LPARAM)
-//
-//  PURPOSE: Processes messages for the main window.
-//
-//  WM_COMMAND  - process the application menu
-//  WM_PAINT    - Paint the main window
-//  WM_DESTROY  - post a quit message and return
-//
-//
-LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+void CAboutDlg::DoDataExchange(CDataExchange* pDX)
 {
-    switch (message)
-    {
-    case WM_COMMAND:
-        {
-            int wmId = LOWORD(wParam);
-            // Parse the menu selections:
-            switch (wmId)
-            {
-            case IDM_ABOUT:
-                DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
-                break;
-            case IDM_EXIT:
-                DestroyWindow(hWnd);
-                break;
-            default:
-                return DefWindowProc(hWnd, message, wParam, lParam);
-            }
-        }
-        break;
-    case WM_PAINT:
-        {
-            PAINTSTRUCT ps;
-            HDC hdc = BeginPaint(hWnd, &ps);
-
-            g_example->Tick( hdc );
-
-            EndPaint(hWnd, &ps);
-            InvalidateRect( hWnd, nullptr, FALSE );
-        }
-        break;
-
-    case WM_LBUTTONDOWN:
-        g_example->OnLMouseButtonDown( { GET_X_LPARAM( lParam ), GET_Y_LPARAM( lParam ) } );
-        break;
-    case WM_LBUTTONUP:
-        g_example->OnLMouseButtonUp( { GET_X_LPARAM( lParam ), GET_Y_LPARAM( lParam ) } );
-        break;
-    case WM_RBUTTONDOWN:
-        g_example->OnRMouseButtonDown( { GET_X_LPARAM( lParam ), GET_Y_LPARAM( lParam ) } );
-        break;
-    case WM_RBUTTONUP:
-        g_example->OnRMouseButtonUp( { GET_X_LPARAM( lParam ), GET_Y_LPARAM( lParam ) } );
-        break;
-    case WM_MOUSEMOVE:
-        g_example->OnMouseMove( { GET_X_LPARAM( lParam ), GET_Y_LPARAM( lParam ) } );
-        break;
-
-    case WM_DESTROY:
-        PostQuitMessage(0);
-        break;
-    default:
-        return DefWindowProc(hWnd, message, wParam, lParam);
-    }
-    return 0;
+	CDialogEx::DoDataExchange(pDX);
 }
 
-// Message handler for about box.
-INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
-{
-    UNREFERENCED_PARAMETER(lParam);
-    switch (message)
-    {
-    case WM_INITDIALOG:
-        return (INT_PTR)TRUE;
+BEGIN_MESSAGE_MAP(CAboutDlg, CDialogEx)
+END_MESSAGE_MAP()
 
-    case WM_COMMAND:
-        if (LOWORD(wParam) == IDOK || LOWORD(wParam) == IDCANCEL)
-        {
-            EndDialog(hDlg, LOWORD(wParam));
-            return (INT_PTR)TRUE;
-        }
-        break;
-    }
-    return (INT_PTR)FALSE;
+// App command to run the dialog
+void CToyDNNApp::OnAppAbout()
+{
+	CAboutDlg aboutDlg;
+	aboutDlg.DoModal();
 }
+
+// CToyDNNApp customization load/save methods
+
+void CToyDNNApp::PreLoadState()
+{
+	BOOL bNameValid;
+	CString strName;
+	bNameValid = strName.LoadString(IDS_EDIT_MENU);
+	ASSERT(bNameValid);
+	GetContextMenuManager()->AddMenu(strName, IDR_POPUP_EDIT);
+}
+
+void CToyDNNApp::LoadCustomState()
+{
+}
+
+void CToyDNNApp::SaveCustomState()
+{
+}
+
+// CToyDNNApp message handlers
+
+
+

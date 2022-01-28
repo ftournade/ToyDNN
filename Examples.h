@@ -13,7 +13,7 @@ public:
 
 	void SetHwnd( HWND _hWnd ) { m_hWnd = _hWnd; }
 
-	virtual void Tick( HDC _hdc ) = 0;
+	virtual void Tick( CDC& _dc ) = 0;
 
 	virtual void OnLMouseButtonDown( const POINT& p ) { m_LMouseButtonDown = true; SetCapture( m_hWnd ); }
 	virtual void OnLMouseButtonUp( const POINT& p ) { m_LMouseButtonDown = false; ReleaseCapture(); }
@@ -24,7 +24,7 @@ public:
 protected:
 	inline bool IsLMouseButtonDown() const { return m_LMouseButtonDown; }
 
-	void PlotLearningCurve( HDC _hdc, const RECT& _r ) const;
+	void PlotLearningCurve( CDC& _dc, const CRect& _r ) const;
 
 protected:
 	HWND m_hWnd;
@@ -40,7 +40,7 @@ protected:
 	
 	uint32_t m_Epoch = 0;
 
-	HPEN m_hBlackPen, m_hRedPen;
+	CPen m_hBlackPen, m_hRedPen;
 
 	bool m_LMouseButtonDown = false;
 	bool m_RMouseButtonDown = false;
@@ -51,7 +51,7 @@ class Example1 : public BaseExample
 {
 public:
 	Example1();
-	virtual void Tick( HDC _hdc ) override;
+	virtual void Tick( CDC& _dc ) override;
 
 protected:
 	std::vector< Tensor > m_Input;
@@ -63,7 +63,7 @@ class Example2 : public BaseExample
 {
 public:
 	Example2();
-	virtual void Tick( HDC _hdc ) override;
+	virtual void Tick( CDC& _dc ) override;
 
 protected:
 	std::vector< Tensor > m_Input;
@@ -77,15 +77,15 @@ class Example3 : public BaseExample
 {
 public:
 	Example3();
-	virtual void Tick( HDC _hdc ) override;
+	virtual void Tick( CDC& _dc ) override;
 
 	virtual void OnLMouseButtonDown( const POINT& p ) override;
 	virtual void OnRMouseButtonDown( const POINT& p ) override;
 	virtual void OnMouseMove( const POINT& p ) override;
 
 private:
-	void DrawConvolutionLayerFeatures( HDC _hdc, uint32_t _zoom=1 );
-	void DrawUserDrawnDigit( HDC _dc );
+	void DrawConvolutionLayerFeatures( CDC& _dc, uint32_t _zoom=1 );
+	void DrawUserDrawnDigit( CDC& _dc );
 private:
 
 	#ifdef USE_CIFAR10_INSTEAD_OF_MNIST
@@ -114,7 +114,7 @@ class Example4 : public BaseExample
 {
 public:
 	Example4();
-	virtual void Tick( HDC _hdc ) override;
+	virtual void Tick( CDC& _dc ) override;
 
 private:
 	std::vector< Tensor > m_TrainingData;

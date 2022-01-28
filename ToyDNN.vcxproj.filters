@@ -13,64 +13,52 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="ThirdParty">
-      <UniqueIdentifier>{622d84b9-247f-458b-84cb-0107118bcb57}</UniqueIdentifier>
+    <Filter Include="UI">
+      <UniqueIdentifier>{39740eda-12e6-4187-9d6e-734498ab6d02}</UniqueIdentifier>
     </Filter>
-    <Filter Include="ThirdParty\jpeg">
-      <UniqueIdentifier>{6fd7e3dc-0556-4f71-a70d-4183fe4be4ae}</UniqueIdentifier>
+    <Filter Include="UI\MFC">
+      <UniqueIdentifier>{b22ae987-6270-470f-99eb-6891aeb59066}</UniqueIdentifier>
     </Filter>
     <Filter Include="Layers">
-      <UniqueIdentifier>{341bf16e-459f-4b4b-8004-923981e51da2}</UniqueIdentifier>
+      <UniqueIdentifier>{7a75a1f8-69be-43b9-b4a2-1b3ec4c3fd8c}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Utils">
-      <UniqueIdentifier>{0bcbb11b-e381-4496-a441-489e9d421562}</UniqueIdentifier>
+    <Filter Include="Core">
+      <UniqueIdentifier>{c6e1e142-09b5-406e-95eb-264600fac3b3}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Layers\Activation">
-      <UniqueIdentifier>{cc73b5a9-2d2a-4a05-b0f5-5b957ec5a5d4}</UniqueIdentifier>
+    <Filter Include="Util">
+      <UniqueIdentifier>{adffe73c-6018-46ee-8fec-c29b4308d676}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Examples">
+      <UniqueIdentifier>{f92680cc-841d-4faf-bbca-93405bd6f979}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ThirdParty">
+      <UniqueIdentifier>{a58f7338-c308-47a3-838b-58c2119f9727}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ThirdParty\JPEG">
+      <UniqueIdentifier>{c075de47-c835-44ec-821e-2cfa14543973}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="framework.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="ChildView.h">
+      <Filter>UI\MFC</Filter>
     </ClInclude>
     <ClInclude Include="targetver.h">
-      <Filter>Header Files</Filter>
+      <Filter>UI\MFC</Filter>
     </ClInclude>
     <ClInclude Include="Resource.h">
-      <Filter>Header Files</Filter>
+      <Filter>UI\MFC</Filter>
+    </ClInclude>
+    <ClInclude Include="framework.h">
+      <Filter>UI\MFC</Filter>
+    </ClInclude>
+    <ClInclude Include="pch.h">
+      <Filter>UI\MFC</Filter>
+    </ClInclude>
+    <ClInclude Include="MainFrm.h">
+      <Filter>UI\MFC</Filter>
     </ClInclude>
     <ClInclude Include="ToyDNN.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Layer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="NeuralNetwork.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Examples.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Tensor.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="ThirdParty\jpeg\tjpgd.h">
-      <Filter>ThirdParty\jpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="ThirdParty\jpeg\tjpgdcnf.h">
-      <Filter>ThirdParty\jpeg</Filter>
-    </ClInclude>
-    <ClInclude Include="JPEG.h">
-      <Filter>Utils</Filter>
-    </ClInclude>
-    <ClInclude Include="BMP.h">
-      <Filter>Utils</Filter>
-    </ClInclude>
-    <ClInclude Include="Datasets.h">
-      <Filter>Utils</Filter>
-    </ClInclude>
-    <ClInclude Include="Util.h">
-      <Filter>Utils</Filter>
+      <Filter>UI\MFC</Filter>
     </ClInclude>
     <ClInclude Include="Layers\Convolution2DLayer.h">
       <Filter>Layers</Filter>
@@ -78,37 +66,82 @@
     <ClInclude Include="Layers\FullyConnectedLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
-    <ClInclude Include="Layers\Activation\ActivationLayers.h">
-      <Filter>Layers\Activation</Filter>
-    </ClInclude>
     <ClInclude Include="Layers\MaxPoolingLayer.h">
       <Filter>Layers</Filter>
     </ClInclude>
+    <ClInclude Include="Layers\Activation\ActivationLayers.h">
+      <Filter>Layers</Filter>
+    </ClInclude>
+    <ClInclude Include="Datasets.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Layer.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="NeuralNetwork.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Tensor.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="Util.h">
+      <Filter>Util</Filter>
+    </ClInclude>
+    <ClInclude Include="JPEG.h">
+      <Filter>Util</Filter>
+    </ClInclude>
+    <ClInclude Include="BMP.h">
+      <Filter>Util</Filter>
+    </ClInclude>
+    <ClInclude Include="Examples.h">
+      <Filter>Examples</Filter>
+    </ClInclude>
+    <ClInclude Include="Plot.h">
+      <Filter>UI</Filter>
+    </ClInclude>
+    <ClInclude Include="ThirdParty\jpeg\tjpgd.h">
+      <Filter>ThirdParty\JPEG</Filter>
+    </ClInclude>
+    <ClInclude Include="ThirdParty\jpeg\tjpgdcnf.h">
+      <Filter>ThirdParty\JPEG</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="ChildView.cpp">
+      <Filter>UI\MFC</Filter>
+    </ClCompile>
+    <ClCompile Include="MainFrm.cpp">
+      <Filter>UI\MFC</Filter>
+    </ClCompile>
+    <ClCompile Include="pch.cpp">
+      <Filter>UI\MFC</Filter>
+    </ClCompile>
     <ClCompile Include="ToyDNN.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="NeuralNetwork.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Examples.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="ThirdParty\jpeg\tjpgd.c">
-      <Filter>ThirdParty\jpeg</Filter>
+      <Filter>UI\MFC</Filter>
     </ClCompile>
     <ClCompile Include="Datasets.cpp">
-      <Filter>Utils</Filter>
+      <Filter>Core</Filter>
     </ClCompile>
-    <ClCompile Include="BMP.cpp">
-      <Filter>Utils</Filter>
-    </ClCompile>
-    <ClCompile Include="JPEG.cpp">
-      <Filter>Utils</Filter>
+    <ClCompile Include="NeuralNetwork.cpp">
+      <Filter>Core</Filter>
     </ClCompile>
     <ClCompile Include="Util.cpp">
-      <Filter>Utils</Filter>
+      <Filter>Util</Filter>
+    </ClCompile>
+    <ClCompile Include="JPEG.cpp">
+      <Filter>Util</Filter>
+    </ClCompile>
+    <ClCompile Include="BMP.cpp">
+      <Filter>Util</Filter>
+    </ClCompile>
+    <ClCompile Include="Examples.cpp">
+      <Filter>Examples</Filter>
+    </ClCompile>
+    <ClCompile Include="Plot.cpp">
+      <Filter>UI</Filter>
+    </ClCompile>
+    <ClCompile Include="ThirdParty\jpeg\tjpgd.c">
+      <Filter>ThirdParty\JPEG</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -117,14 +150,22 @@
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
-    <Image Include="small.ico">
+    <Image Include="res\userimages.bmp">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="ToyDNN.ico">
+    <Image Include="res\ToyDNN.ico">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\Toolbar.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="res\Toolbar256.bmp">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="TODO.txt" />
+    <None Include="res\ToyDNN.rc2">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

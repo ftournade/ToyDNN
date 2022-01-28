@@ -1,3 +1,4 @@
+#include "pch.h"
 #include "Datasets.h"
 #include "JPEG.h"
 #include "BMP.h" //test

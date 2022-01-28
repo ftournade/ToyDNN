@@ -1,3 +1,4 @@
+#include "pch.h"
 #include "NeuralNetwork.h"
 #include "Util.h"
 #include "BMP.h"

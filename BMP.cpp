@@ -1,3 +1,4 @@
+#include "pch.h"
 #include "BMP.h"
 
 #include <Windows.h>

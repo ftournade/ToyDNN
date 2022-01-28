@@ -1,3 +1,4 @@
+#include "pch.h"
 #include "Examples.h"
 
 
@@ -9,11 +10,11 @@ void TransformCurve( const RECT& _r, float _xScale, float _yScale, int _epoch, f
 
 BaseExample::BaseExample() : m_hWnd( NULL )
 {
-    m_hBlackPen = CreatePen( PS_SOLID, 2, RGB( 0, 0, 0 ) );
-    m_hRedPen = CreatePen( PS_SOLID, 3, RGB( 255, 0, 0 ) );
+    m_hBlackPen.CreatePen( PS_SOLID, 2, RGB( 0, 0, 0 ) );
+    m_hRedPen.CreatePen( PS_SOLID, 3, RGB( 255, 0, 0 ) );
 }
 
-void BaseExample::PlotLearningCurve( HDC _hdc, const RECT& _r ) const
+void BaseExample::PlotLearningCurve( CDC& _dc, const CRect& _r ) const
 {
     if( m_LearningCurve.empty() )
         return;
@@ -40,18 +41,18 @@ void BaseExample::PlotLearningCurve( HDC _hdc, const RECT& _r ) const
     float yScale = (float)(_r.bottom - _r.top) / (float)maxy;
 
     //Background
-    SelectObject( _hdc, GetStockObject( DC_BRUSH ) );
-    SetDCBrushColor( _hdc, RGB( 200, 200, 200 ) );
+    _dc.SelectStockObject( DC_BRUSH );
+    _dc.SetDCBrushColor( RGB( 200, 200, 200 ) );
     
-    Rectangle( _hdc, _r.left, _r.top, _r.right, _r.bottom );
+    _dc.Rectangle( _r );
 
     //Draw curve
 
-    SelectObject( _hdc, m_hRedPen );
+    _dc.SelectObject( m_hRedPen );
 
     int x, y;
     TransformCurve( _r, xScale, yScale, m_LearningCurve[0].first, m_LearningCurve[0].second.learningSetCost, x, y );
-    MoveToEx( _hdc, x, y, NULL );
+    _dc.MoveTo( x, y );
     
     for( uint32_t i = 1 ; i < m_LearningCurve.size() ; ++i )
     {
@@ -60,18 +61,18 @@ void BaseExample::PlotLearningCurve( HDC _hdc, const RECT& _r ) const
         if( x > _r.right )
             break;
 
-        LineTo( _hdc, x, y );
+        _dc.LineTo( x, y );
     }
 
     //Axes
 
-    SelectObject( _hdc, m_hBlackPen );
+    _dc.SelectObject( m_hBlackPen );
 
-    MoveToEx( _hdc, _r.left, _r.bottom, NULL );
-    LineTo( _hdc, _r.right, _r.bottom );
+    _dc.MoveTo( _r.left, _r.bottom );
+    _dc.LineTo( _r.right, _r.bottom );
 
-    MoveToEx( _hdc, _r.left, _r.bottom, NULL );
-    LineTo( _hdc, _r.left, _r.top );
+    _dc.MoveTo( _r.left, _r.bottom );
+    _dc.LineTo( _r.left, _r.top );
 
 }
 
@@ -92,7 +93,7 @@ Example1::Example1()
 
 }
 
-void Example1::Tick( HDC _hdc )
+void Example1::Tick( CDC& _dc )
 {
     //Hyper parameters
     const int numEpochs = 100;
@@ -108,15 +109,17 @@ void Example1::Tick( HDC _hdc )
 
     m_LearningCurve.push_back( std::pair<uint32_t, LearningCurveData>( m_Epoch, { error, error } ) );
 
-    RECT r{10,10,800,800};
-    PlotLearningCurve( _hdc, r );
+    CRect r(10,10,800,800);
+    PlotLearningCurve( _dc, r );
 }
 
 //-----------------------------------------
 
 Example2::Example2()
 {
-    net.AddLayer( new FullyConnected( 10 ) );
+ 
+    net.AddLayer( new FullyConnected( 50 ) );
+    net.AddLayer( new Relu() );
     net.AddLayer( new FullyConnected( 1 ) );
     net.AddLayer( new Sigmoid() );
     net.Compile( TensorShape( 1 ) );
@@ -139,6 +142,7 @@ Example2::Example2()
         m_ExpectedOutput[i].push_back( y );
     }
 
+
 /*
     Tensor out;
     net.Evaluate( m_Input[0], out );
@@ -148,13 +152,13 @@ Example2::Example2()
     */
 }
 
-void Example2::Tick( HDC _hdc )
+void Example2::Tick( CDC& _dc )
 {
     //Hyper parameters
     const int numEpochs = 1;
     const int batchSize = 1000;
-    const int validationInterval = 1;
-    const float learningRate = 0.00002f;
+    const int validationInterval = 10;
+    const float learningRate = 0.00004f;
     const float errorTarget = 0.01f;
 
 
@@ -164,8 +168,10 @@ void Example2::Tick( HDC _hdc )
 
     m_LearningCurve.push_back( std::pair<uint32_t, LearningCurveData>( m_Epoch, { error, error } ) );
 
-    RECT r{ 10,10,800,800 };
-    PlotLearningCurve( _hdc, r );
+    net.GradientCheck( m_Input, m_ExpectedOutput, 10 );
+
+    CRect r( 10, 10, 800, 800 );
+    PlotLearningCurve( _dc, r );
 }
 
 //-----------------------------------------
@@ -207,7 +213,7 @@ Example3::Example3()
     m_UserDrawnDigit.resize( m_ImageRes * m_ImageRes, 0 );
 }
 
-void Example3::Tick( HDC _hdc )
+void Example3::Tick( CDC& _dc )
 {
     //Hyper parameters
     const int numEpochs = 1;
@@ -240,16 +246,16 @@ void Example3::Tick( HDC _hdc )
         
         RECT r = { m_UserDrawDigitRect.left, m_UserDrawDigitRect.bottom, m_UserDrawDigitRect.right, m_UserDrawDigitRect.bottom + 30 };
 
-        char buffer[64];
-        sprintf_s( buffer, "Recognized digit: %d", m_RecognizedDigit );
-        DrawTextA( _hdc, buffer, -1, &r, DT_CENTER );
+        TCHAR buffer[64];
+        _stprintf_s( buffer, _T("Recognized digit: %d"), m_RecognizedDigit );
+        _dc.DrawText( buffer, -1, &r, DT_CENTER );
     
-        DrawUserDrawnDigit( _hdc );
+        DrawUserDrawnDigit( _dc );
     
       //  DrawConvolutionLayerFeatures( _hdc, 3 ); //SLOW
     }
 
-    RECT r{ 10,10,300,300 };
+  //  RECT r{ 10,10,300,300 };
   //  PlotLearningCurve( _hdc, r );
 
 }
@@ -290,7 +296,7 @@ void Example3::OnRMouseButtonDown( const POINT& p )
     std::fill( m_UserDrawnDigit.begin(), m_UserDrawnDigit.end(), 0.0f );
 }
 
-void Example3::DrawConvolutionLayerFeatures( HDC _hdc, uint32_t _zoom )
+void Example3::DrawConvolutionLayerFeatures( CDC& _dc, uint32_t _zoom )
 {
     uint32_t s = (m_ImageRes - m_KernelSize + 1) / (m_Stride * m_Stride);
 
@@ -313,7 +319,7 @@ void Example3::DrawConvolutionLayerFeatures( HDC _hdc, uint32_t _zoom )
                 {
                     for( uint32_t dx = 0 ; dx < _zoom ; ++dx )
                     {
-                        SetPixel( _hdc, x * _zoom + dx + f * (_zoom * s + 3), y * _zoom + dy, col );
+                        _dc.SetPixel( x * _zoom + dx + f * (_zoom * s + 3), y * _zoom + dy, col );
                     }
                 }
 
@@ -323,14 +329,15 @@ void Example3::DrawConvolutionLayerFeatures( HDC _hdc, uint32_t _zoom )
 
 }
 
-void Example3::DrawUserDrawnDigit( HDC _hdc )
+void Example3::DrawUserDrawnDigit( CDC& _dc )
 {
-    SelectObject( _hdc, GetStockObject( WHITE_BRUSH ) );
-    Rectangle( _hdc, m_UserDrawDigitRect.left, m_UserDrawDigitRect.top, m_UserDrawDigitRect.right, m_UserDrawDigitRect.bottom );
+    _dc.SelectStockObject( WHITE_BRUSH );
+    _dc.Rectangle( &m_UserDrawDigitRect );
+    CBrush blackBrush;
+    blackBrush.CreateStockObject( BLACK_BRUSH );
+    _dc.FrameRect( &m_UserDrawDigitRect, &blackBrush );
 
-    FrameRect( _hdc, &m_UserDrawDigitRect, (HBRUSH)GetStockObject( BLACK_BRUSH ) );
-
-    SelectObject( _hdc, GetStockObject( BLACK_BRUSH ) );
+    _dc.SelectStockObject( BLACK_BRUSH );
 
     uint32_t pixelWidth = (m_UserDrawDigitRect.right - m_UserDrawDigitRect.left) / m_ImageRes;
     uint32_t pixelHeight = (m_UserDrawDigitRect.bottom - m_UserDrawDigitRect.top) / m_ImageRes;
@@ -341,8 +348,8 @@ void Example3::DrawUserDrawnDigit( HDC _hdc )
         {
             if( m_UserDrawnDigit[y * m_ImageRes + x] > 0.0f )
             {
-                Rectangle( _hdc,    m_UserDrawDigitRect.left + x * pixelWidth, m_UserDrawDigitRect.top + y * pixelHeight,
-                                    m_UserDrawDigitRect.left + (x+1) * pixelWidth, m_UserDrawDigitRect.top + (y+1) * pixelHeight );
+                _dc.Rectangle(    m_UserDrawDigitRect.left + x * pixelWidth, m_UserDrawDigitRect.top + y * pixelHeight,
+                                  m_UserDrawDigitRect.left + (x+1) * pixelWidth, m_UserDrawDigitRect.top + (y+1) * pixelHeight );
             }
         }
 
@@ -376,7 +383,7 @@ Example4::Example4()
         throw std::exception("Can't load celebA database");
 }
 
-void Example4::Tick( HDC _hdc )
+void Example4::Tick( CDC& _dc )
 {
     //Hyper parameters
     const int numEpochs = 100;

@@ -1,3 +1,4 @@
+#include "pch.h"
 #include "JPEG.h"
 #include "ThirdParty/jpeg/tjpgd.h"
 #include <windows.h>
