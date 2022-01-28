@@ -41,7 +41,7 @@ namespace ToyDNN
 			#pragma omp parallel for
 			for( int i = 0 ; i < (int)n ; ++i )
 			{
-				_out[i] = std::abs( _in[i] );
+				_out[i] = std::max( _in[i], Scalar(0.0) );
 
 				//TODO if( isTraining )
 				{
@@ -58,7 +58,7 @@ namespace ToyDNN
 			#pragma omp parallel for
 			for( int i = 0 ; i < (int)n ; ++i )
 			{
-				float gradient = _layerInputs[i] > 0.0f ? 1.0f : 0.0f;
+				Scalar gradient = _layerInputs[i] > Scalar(0.0) ? Scalar(1.0) : Scalar(0.0);
 
 				_inputGradients[i] = _outputGradients[i] * gradient;
 			}
@@ -126,7 +126,7 @@ namespace ToyDNN
 			#pragma omp parallel for
 			for( int i = 0 ; i < (int)n ; ++i )
 			{
-				_out[i] = 1.0f / (1.0f + std::exp( -_in[i] ));
+				_out[i] = Scalar(1.0) / (Scalar(1.0) + std::exp( -_in[i] ));
 
 				//TODO if( isTraining )
 				{
@@ -146,7 +146,7 @@ namespace ToyDNN
 				//This one is a bit special
 				//dsigmoid(x)/dx = sigmoid(x) * (1 - sigmoid(x))
 
-				Scalar gradient = m_Activations[i] * (1.0f - m_Activations[i]);
+				Scalar gradient = m_Activations[i] * (Scalar(1.0) - m_Activations[i]);
 
 				_inputGradients[i] = _outputGradients[i] * gradient;
 			}
@@ -188,7 +188,7 @@ namespace ToyDNN
 				//This one is a bit special
 				//dtanh(x)/dx = 1 - tanh(x)
 
-				Scalar gradient = 1.0f - m_Activations[i];
+				Scalar gradient = Scalar(1.0) - m_Activations[i] * m_Activations[i];
 
 				_inputGradients[i] = _outputGradients[i] * gradient;
 			}
@@ -234,7 +234,7 @@ namespace ToyDNN
 			{
 				for( uint32_t k=0; k < n ; ++k )
 				{
-					Scalar f = (k == j) ? 1.0f : 0.0f;
+					Scalar f = (k == j) ? Scalar(1.0) : Scalar(0.0);
 					df[k] = m_Activations[j] * (f - m_Activations[j]);
 				}
 
