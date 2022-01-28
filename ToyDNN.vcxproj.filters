@@ -19,6 +19,12 @@
     <Filter Include="ThirdParty\jpeg">
       <UniqueIdentifier>{6fd7e3dc-0556-4f71-a70d-4183fe4be4ae}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Layers">
+      <UniqueIdentifier>{341bf16e-459f-4b4b-8004-923981e51da2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utils">
+      <UniqueIdentifier>{0bcbb11b-e381-4496-a441-489e9d421562}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h">
@@ -39,13 +45,7 @@
     <ClInclude Include="NeuralNetwork.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Util.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Examples.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="Datasets.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Tensor.h">
@@ -57,14 +57,26 @@
     <ClInclude Include="ThirdParty\jpeg\tjpgdcnf.h">
       <Filter>ThirdParty\jpeg</Filter>
     </ClInclude>
-    <ClInclude Include="JPEG.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="BMP.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="ActivationFuncs.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="JPEG.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="BMP.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="Datasets.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="Util.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="Layers\Convolution2DLayer.h">
+      <Filter>Layers</Filter>
+    </ClInclude>
+    <ClInclude Include="Layers\FullyConnectedLayer.h">
+      <Filter>Layers</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -74,23 +86,23 @@
     <ClCompile Include="NeuralNetwork.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Util.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Examples.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Datasets.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ThirdParty\jpeg\tjpgd.c">
       <Filter>ThirdParty\jpeg</Filter>
     </ClCompile>
-    <ClCompile Include="JPEG.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Datasets.cpp">
+      <Filter>Utils</Filter>
     </ClCompile>
     <ClCompile Include="BMP.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="JPEG.cpp">
+      <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="Util.cpp">
+      <Filter>Utils</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

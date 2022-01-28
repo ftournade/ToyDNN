@@ -1,6 +1,8 @@
 #pragma once
 
 #include "Layer.h"
+#include "Layers/FullyConnectedLayer.h"
+#include "Layers/Convolution2DLayer.h"
 
 #include <memory>
 
