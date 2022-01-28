@@ -68,6 +68,8 @@ public:
 protected:
 	std::vector< Tensor > m_Input;
 	std::vector< Tensor > m_ExpectedOutput;
+
+	std::vector< Scalar > m_GroundTruthXAxis, m_GroundTruthYAxis;
 };
 
 

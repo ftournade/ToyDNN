@@ -205,6 +205,7 @@
     <ClInclude Include="ThirdParty\jpeg\tjpgdcnf.h" />
     <ClInclude Include="ToyDNN.h" />
     <ClInclude Include="Util.h" />
+    <ClInclude Include="Win32BackBuffer.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BMP.cpp" />
@@ -229,6 +230,7 @@
     </ClCompile>
     <ClCompile Include="ToyDNN.cpp" />
     <ClCompile Include="Util.cpp" />
+    <ClCompile Include="Win32BackBuffer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ToyDNN.rc" />

@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "Examples.h"
 
+#include "Plot.h"
 
 void TransformCurve( const RECT& _r, float _xScale, float _yScale, int _epoch, float _error, int& _x, int& _y )
 {
@@ -117,18 +118,21 @@ void Example1::Tick( CDC& _dc )
 
 Example2::Example2()
 {
- 
-    net.AddLayer( new FullyConnected( 50 ) );
-    net.AddLayer( new Relu() );
-    net.AddLayer( new FullyConnected( 1 ) );
+    srand( 666 );
+
+    net.AddLayer( new FullyConnected( 20 ) );
     net.AddLayer( new Sigmoid() );
+    net.AddLayer( new FullyConnected( 1 ) );
+    net.AddLayer( new Tanh() );
     net.Compile( TensorShape( 1 ) );
 
-    const uint32_t numSamples = 1000;
+    const uint32_t numSamples = 400;
     const float rangeMin = -10.0f;
     const float rangeMax = 10.0f;
     const float step = (rangeMax - rangeMin) / (float)numSamples;
 
+    m_GroundTruthXAxis.resize( numSamples );
+    m_GroundTruthYAxis.resize( numSamples );
     m_Input.resize( numSamples );
     m_ExpectedOutput.resize( numSamples );
 
@@ -140,6 +144,9 @@ Example2::Example2()
 
         m_Input[i].push_back( x );
         m_ExpectedOutput[i].push_back( y );
+    
+        m_GroundTruthXAxis[i] = x;
+        m_GroundTruthYAxis[i] = y;
     }
 
 
@@ -168,10 +175,26 @@ void Example2::Tick( CDC& _dc )
 
     m_LearningCurve.push_back( std::pair<uint32_t, LearningCurveData>( m_Epoch, { error, error } ) );
 
-    net.GradientCheck( m_Input, m_ExpectedOutput, 10 );
+  //  net.GradientCheck( m_Input, m_ExpectedOutput, 10 );
+
+    std::vector< Scalar > predictedCurve( m_GroundTruthXAxis.size() );
+
+    for( uint32_t i = 0 ; i < m_GroundTruthXAxis.size() ; ++i )
+    {
+        Tensor in, out;
+        in.push_back( m_GroundTruthXAxis[i] );
+        net.Evaluate( in, out );
+        predictedCurve[i] = out[0];
+    }
 
     CRect r( 10, 10, 800, 800 );
-    PlotLearningCurve( _dc, r );
+
+    Plot plot;
+    plot.PlotCurve( "", "x", "y", Color( 1, 0, 0 ), 4, m_GroundTruthXAxis, m_GroundTruthYAxis );
+    plot.PlotCurve( "", "x", "y", Color( 0, 1, 0 ), 4, m_GroundTruthXAxis, predictedCurve );
+    plot.Draw( _dc, r );
+
+//  PlotLearningCurve( _dc, r );
 }
 
 //-----------------------------------------

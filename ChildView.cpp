@@ -48,7 +48,24 @@ void CChildView::OnPaint()
 {
 	CPaintDC dc(this); // device context for painting
 	
-	theApp.m_Example.Tick( dc );
+	CRect r;
+	GetClientRect( &r );
+
+	if( (r.Width() != m_backBuffer.GetWidth()) ||
+		(r.Height() != m_backBuffer.GetHeight()) )
+	{
+		if( !m_backBuffer.Init( GetSafeHwnd(), r.Width(), r.Height() ) )
+		{
+			//TODO error handling
+			ASSERT( false );
+		}
+	}
+
+	CDC* pMemDC = CDC::FromHandle( m_backBuffer.GetBackBufferDC() );
+
+	theApp.m_Example.Tick( *pMemDC );
+
+	m_backBuffer.Blit( dc.GetSafeHdc() );
 
 	Invalidate( FALSE );
 }

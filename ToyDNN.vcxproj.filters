@@ -105,6 +105,9 @@
     <ClInclude Include="ThirdParty\jpeg\tjpgdcnf.h">
       <Filter>ThirdParty\JPEG</Filter>
     </ClInclude>
+    <ClInclude Include="Win32BackBuffer.h">
+      <Filter>UI\MFC</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ChildView.cpp">
@@ -142,6 +145,9 @@
     </ClCompile>
     <ClCompile Include="ThirdParty\jpeg\tjpgd.c">
       <Filter>ThirdParty\JPEG</Filter>
+    </ClCompile>
+    <ClCompile Include="Win32BackBuffer.cpp">
+      <Filter>UI\MFC</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

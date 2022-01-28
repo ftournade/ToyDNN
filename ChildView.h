@@ -1,12 +1,7 @@
-
-// ChildView.h : interface of the CChildView class
-//
-
-
 #pragma once
 
 
-// CChildView window
+#include "Win32BackBuffer.h"
 
 class CChildView : public CWnd
 {
@@ -32,5 +27,7 @@ public:
 protected:
 	afx_msg void OnPaint();
 	DECLARE_MESSAGE_MAP()
+
+	Win32BackBuffer m_backBuffer;
 };
 
