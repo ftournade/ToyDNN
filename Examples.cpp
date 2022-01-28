@@ -115,18 +115,28 @@ void Example1::Tick( HDC _hdc )
 
 Example3::Example3()
 {
+#ifdef USE_CIFAR10_INSTEAD_OF_MNIST
+    uint32_t numChannels = 3;
+#else
+    uint32_t numChannels = 1;
+#endif
 
     net.AddLayer( std::make_unique<Convolution2DLayer<Activation::Relu>>( m_NumFeatureMaps, m_KernelSize, m_Stride ) );
     net.AddLayer( std::make_unique<Convolution2DLayer<Activation::Relu>>( m_NumFeatureMaps * 2, m_KernelSize, m_Stride * 2 ) );
     net.AddLayer( std::make_unique<FullyConnectedLayer<Activation::Relu>>( 400 ) );
     net.AddLayer( std::make_unique<FullyConnectedLayer<Activation::Sigmoid>>( 10 ) );
-    net.Compile( TensorShape( m_ImageRes, m_ImageRes, 1 ) );
+    net.Compile( TensorShape( m_ImageRes, m_ImageRes, numChannels ) );
 
+#ifdef USE_CIFAR10_INSTEAD_OF_MNIST
+    if( !LoadCifar10Dataset( "D:\\Dev\\DeepLearning Datasets\\cifar10",
+                           m_TrainingData, m_ValidationData, m_TrainingMetaData, m_ValidationMetaData ) )
+        throw std::exception( "Can't load Cifar10 database" );
+#else
     if( !LoadMnistDataset( "D:\\Dev\\DeepLearning Datasets\\MNIST",
                            0.0f, 1.0f, 0, 0,
                            m_TrainingData, m_ValidationData, m_TrainingMetaData, m_ValidationMetaData ) )
         throw std::exception( "Can't load MNIST database" );
-
+#endif
 
     m_UserDrawnDigit.resize( m_ImageRes * m_ImageRes, 0 );
 }
@@ -287,7 +297,8 @@ Example4::Example4()
     if( halfRes )
         inputShape = TensorShape( inputShape.m_SX / 2, inputShape.m_SY / 2, 3 );
 
-    net.AddLayer( std::make_unique<FullyConnectedLayer<Activation::Relu>>( inputShape.Size() / 12 ) );
+//    net.AddLayer( std::make_unique<Convolution2DLayer<Activation::Relu>>( 16, 3, 2 ) );
+    net.AddLayer( std::make_unique<FullyConnectedLayer<Activation::Relu>>( 15 ) );
     net.AddLayer( std::make_unique<FullyConnectedLayer<Activation::Sigmoid>>( inputShape.Size() ) );
     net.Compile( inputShape );
 
@@ -299,10 +310,10 @@ Example4::Example4()
 void Example4::Tick( HDC _hdc )
 {
     //Hyper parameters
-    const int numEpochs = 1;
-    const int batchSize = 100;
-    const int validationInterval = 1;
-    const float learningRate = 0.0002f;
+    const int numEpochs = 100;
+    const int batchSize = 30;
+    const int validationInterval = 20;
+    const float learningRate = 0.002f;
     const float errorTarget = 0.04f;
 
     net.Train( m_TrainingData, m_TrainingData, m_ValidationData, m_ValidationData, numEpochs, batchSize, validationInterval, learningRate, errorTarget );

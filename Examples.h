@@ -56,6 +56,7 @@ protected:
 	std::vector< Tensor > m_ExpectedOutput;
 };
 
+#define USE_CIFAR10_INSTEAD_OF_MNIST
 //Basic MNIST classifier
 class Example3 : public BaseExample
 {
@@ -72,7 +73,11 @@ private:
 	void DrawUserDrawnDigit( HDC _dc );
 private:
 
+	#ifdef USE_CIFAR10_INSTEAD_OF_MNIST
+	static const uint32_t m_ImageRes = 32;
+	#else
 	static const uint32_t m_ImageRes = 28;
+	#endif
 	static const uint32_t m_NumFeatureMaps = 8;
 	static const uint32_t m_KernelSize = 3;
 	static const uint32_t m_Stride = 1;

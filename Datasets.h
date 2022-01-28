@@ -27,3 +27,9 @@ bool LoadMnistDataset(	const char* _filepath,
 						std::vector< Tensor >& _validationSetData,
 						std::vector< Tensor >& _trainingSetMetaData,
 						std::vector< Tensor >& _validationSetMetaData );
+
+bool LoadCifar10Dataset( const char* _filepath,
+						 std::vector< Tensor >& _trainingSetData,
+						 std::vector< Tensor >& _validationSetData,
+						 std::vector< Tensor >& _trainingSetMetaData,
+						 std::vector< Tensor >& _validationSetMetaData );

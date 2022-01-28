@@ -418,3 +418,70 @@ bool LoadMnistDataset( const char* _filepath,
 
 
 #pragma endregion
+
+#pragma region CIFAR10
+
+bool LoadCifar10Dataset( const char* _filename,
+						 std::vector< Tensor >& _dataSet,
+						 std::vector< Tensor >& _metaData )
+{
+	static const uint32_t numPixels = 32 * 32;
+
+	std::ifstream ifs( _filename, std::ios::in | std::ios::binary );
+	
+	if( ifs.fail() || ifs.bad() )
+		return false;
+
+	uint8_t label;
+	uint8_t pixels[numPixels * 3];
+
+	Tensor image( numPixels * 3 );
+	Tensor labelTensor(10);
+
+	while( ifs.read( (char*)&label, 1 ) )
+	{
+
+		if( !ifs.read( (char*)(&pixels[0]), numPixels * 3 ) )
+			break;
+		
+		
+		std::fill( labelTensor.begin(), labelTensor.end(), 0.0f );
+		labelTensor[label] = 1.0f;
+
+		for( uint32_t i = 0 ; i < numPixels * 3 ; ++i )
+		{
+			image[i] = (float)pixels[i] / 255.0f;
+		}
+
+		_dataSet.push_back( image );
+		_metaData.push_back( labelTensor );
+	}
+
+	return true;
+}
+
+
+bool LoadCifar10Dataset( const char* _filepath,
+						 std::vector< Tensor >& _trainingSetData,
+						 std::vector< Tensor >& _validationSetData,
+						 std::vector< Tensor >& _trainingSetMetaData,
+						 std::vector< Tensor >& _validationSetMetaData )
+{
+	char filename[1024];
+	sprintf_s( filename, "%s\\test_batch.bin", _filepath );
+
+	if( !LoadCifar10Dataset( filename, _validationSetData, _validationSetMetaData ) )
+		return false;
+
+	for( int i = 0 ; i < 5 ; ++i )
+	{
+		sprintf_s( filename, "%s\\data_batch_%d.bin", _filepath, i + 1 );
+
+		if( !LoadCifar10Dataset( filename, _trainingSetData, _trainingSetMetaData ) )
+			return false;
+	}
+
+	return true;
+}
+
+#pragma endregion
