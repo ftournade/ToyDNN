@@ -147,7 +147,7 @@ namespace ToyDNN
 		}
 		else
 		{
-			uint32_t numPixels = _pixels.size() / 3;
+			uint32_t numPixels = (uint32_t)_pixels.size() / 3;
 			data.resize( numPixels * 3 );
 
 			for( uint32_t i = 0 ; i < numPixels; ++i )

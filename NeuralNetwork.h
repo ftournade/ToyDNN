@@ -18,23 +18,29 @@ namespace ToyDNN
 		void Compile( const TensorShape& _inputShape );
 
 		//Return error metric
-		float Train( const std::vector<Tensor>& _trainingSet,
+		Scalar Train( const std::vector<Tensor>& _trainingSet,
 					 const std::vector<Tensor>& _trainingSetExpectedOutput,
 					 const std::vector<Tensor>& _validationSet,
 					 const std::vector<Tensor>& _validationSetExpectedOutput,
 					 uint32_t _numEpochs, uint32_t _batchSize, uint32_t _validationInterval /*evaluate vaildationSet every N batch*/,
-					 float _learningRate, float _errorTarget = 0.0001f );
+					  Scalar _learningRate, Scalar _errorTarget = 0.0001f );
 		void Evaluate( const Tensor& _in, Tensor& _out ) const;
 
 		static void ComputeError( const Tensor& _out, const Tensor& _expectedOutput, Tensor& _error );
-		static float ComputeError( const Tensor& _out, const Tensor& _expectedOutput );
-		float ComputeError( const std::vector<Tensor>& _validationSet, const std::vector<Tensor>& _validationSetExpectedOutput );
+		static Scalar ComputeError( const Tensor& _out, const Tensor& _expectedOutput );
+		Scalar ComputeError( const std::vector<Tensor>& _validationSet, const std::vector<Tensor>& _validationSetExpectedOutput );
 
 		const Layer* DbgGetLayer( uint32_t _idx ) const { return m_Layers[_idx].get(); }
 
+		//Used to debug gradient computation
+		//The idea is to compare gradients computed during back propagation with gradients computed by finite difference.
+		//We select random parameters (weights and biases) and we slightly perturb them one at a time, we then see the effect on the loss function.
+		//Gradient = (EvalNetworkLoss( Param + epsilon ) - EvalNetworkLoss( Param - epsilon )) / (2 * epsilon)
+		void GradientCheck( const std::vector<Tensor>& _dataSet, const std::vector<Tensor>& _dataSetExpectedOutput, uint32_t _numRandomParametersToCheck );
+
 	private:
 		void ClearWeightDeltas();
-		void ApplyWeightDeltas( float _learningRate );
+		void ApplyWeightDeltas( Scalar _learningRate );
 		void BackPropagation( const Tensor& _input, const Tensor& _expectedOutput );
 
 	private:

@@ -32,7 +32,7 @@ namespace ToyDNN
 
 	void Dump( const Tensor& t )
 	{
-		for( float f : t )
+		for( Scalar f : t )
 		{
 			Log( "%f ", f );
 		}
@@ -41,7 +41,7 @@ namespace ToyDNN
 
 	uint32_t GetMostProbableClassIndex( const Tensor& _tensor )
 	{
-		float best = -FLT_MAX;
+		Scalar best = -FLT_MAX;
 		uint32_t bestIdx;
 
 		for( int i = 0 ; i < _tensor.size() ; ++i )
@@ -73,19 +73,19 @@ namespace ToyDNN
 		}
 	}
 
-	float NeuralNetwork::Train( const std::vector<Tensor>& _trainingSet,
+	Scalar NeuralNetwork::Train( const std::vector<Tensor>& _trainingSet,
 								const std::vector<Tensor>& _trainingSetExpectedOutput,
 								const std::vector<Tensor>& _validationSet,
 								const std::vector<Tensor>& _validationSetExpectedOutput,
 								uint32_t _numEpochs, uint32_t _batchSize, uint32_t _validationInterval,
-								float _learningRate, float _errorTarget )
+								Scalar _learningRate, Scalar _errorTarget )
 	{
 		assert( _trainingSet.size() == _trainingSetExpectedOutput.size() );
 		assert( _validationSet.size() == _validationSetExpectedOutput.size() );
-		uint32_t numTrainingSamples = _trainingSet.size();
-		uint32_t numValidationSamples = _trainingSet.size();
+		uint32_t numTrainingSamples = (uint32_t)_trainingSet.size();
+		uint32_t numValidationSamples = (uint32_t)_trainingSet.size();
 
-		float error;
+		Scalar error;
 		Tensor out;
 
 		for( uint32_t epoch = 0; epoch < _numEpochs ; ++epoch )
@@ -122,7 +122,7 @@ namespace ToyDNN
 
 				if( bEvaluateValidationSet )
 				{
-					float validationSetError = ComputeError( _validationSet, _validationSetExpectedOutput );
+					Scalar validationSetError = ComputeError( _validationSet, _validationSetExpectedOutput );
 
 					Log( "Validation set error: %f\n", validationSetError );
 
@@ -183,36 +183,36 @@ namespace ToyDNN
 
 		for( uint32_t i = 0 ; i < _out.size() ; ++i )
 		{
-			float e = _out[i] - _expectedOutput[i];
-			_error[i] = e * e * 0.5f;
+			Scalar e = _out[i] - _expectedOutput[i];
+			_error[i] = e * e * Scalar(0.5);
 		}
 	}
 
-	float NeuralNetwork::ComputeError( const Tensor& _out, const Tensor& _expectedOutput )
+	Scalar NeuralNetwork::ComputeError( const Tensor& _out, const Tensor& _expectedOutput )
 	{
-		float error = 0.0f;
+		Scalar error = 0.0;
 
-	#pragma omp parallel for reduction(+:error)
+		#pragma omp parallel for reduction(+:error)
 		for( int i = 0 ; i < (int)_out.size() ; ++i )
 		{
-			float e = _out[i] - _expectedOutput[i];
-			error += e * e * 0.5f;
+			Scalar e = _out[i] - _expectedOutput[i];
+			error += e * e * Scalar(0.5);
 		}
 
 		return error;//TODO average ?
 	}
 
-	float NeuralNetwork::ComputeError( const std::vector<Tensor>& _dataSet, const std::vector<Tensor>& _dataSetExpectedOutput )
+	Scalar NeuralNetwork::ComputeError( const std::vector<Tensor>& _dataSet, const std::vector<Tensor>& _dataSetExpectedOutput )
 	{
-	#define classification_accurary
+	//#define classification_accurary
 
-		float error = 0.0f;
+		Scalar error = 0.0;
 
 	#ifdef classification_accurary
 		uint32_t validOutputCount = 0;
 	#endif
 
-	#pragma omp parallel for reduction(+:error)
+		#pragma omp parallel for reduction(+:error)
 		for( int i = 0 ; i < (int)_dataSet.size() ; ++i )
 		{
 			Tensor out;
@@ -240,11 +240,11 @@ namespace ToyDNN
 			error += ComputeError( out, _dataSetExpectedOutput[i] );
 		}
 
-	#ifdef classification_accurary
+		#ifdef classification_accurary
 		Log( "accuracy: %.1f%%\n", 100.0f * (float)validOutputCount / (float)_dataSet.size() );
-	#endif
+		#endif
 
-		return error / (float)_dataSet.size();
+		return error;// / (float)_dataSet.size();
 	}
 
 
@@ -255,14 +255,14 @@ namespace ToyDNN
 
 		//Compute Cost gradients, in other words dE/dA for last layer
 
-		const uint32_t numOutputs = _expectedOutput.size();
+		const uint32_t numOutputs = (uint32_t)_expectedOutput.size();
 		outputGradients[0].resize( numOutputs );
 		const Tensor& output = m_Layers[m_Layers.size() - 1]->GetOutput();
 
 		for( uint32_t i = 0 ; i < numOutputs ; ++i )
 		{
 			//TODO make choice of Cost function a paramater to the network
-			float dE_dA = output[i] - _expectedOutput[i];
+			Scalar dE_dA = output[i] - _expectedOutput[i];
 			outputGradients[0][i] = dE_dA;
 		}
 
@@ -285,10 +285,67 @@ namespace ToyDNN
 		}
 	}
 
-	void NeuralNetwork::ApplyWeightDeltas( float _learningRate )
+	void NeuralNetwork::ApplyWeightDeltas( Scalar _learningRate )
 	{
 		for( auto& layer : m_Layers )
 			layer->ApplyWeightDeltas( _learningRate );
+	}
+
+	void NeuralNetwork::GradientCheck( const std::vector<Tensor>& _dataSet, const std::vector<Tensor>& _dataSetExpectedOutput, uint32_t _numRandomParametersToCheck )
+	{
+		assert( _dataSet.size() == _dataSetExpectedOutput.size() );
+
+		const Scalar epsilon = Scalar(1e-5);
+		const Scalar gradientTolerance = Scalar(1e-5);
+
+		//Evaluate gradients through with back propagation
+
+		ClearWeightDeltas();
+
+		Tensor out;
+
+		for( uint32_t i=0 ; i < _dataSet.size() ; ++i )
+		{
+			Evaluate( _dataSet[i], out );
+			BackPropagation( _dataSet[i], _dataSetExpectedOutput[i] );
+		}
+
+		//Now compute "ground thruth" gradients with finite difference and compare them to back propagation gradients
+
+		for( uint32_t i = 0 ; i < _numRandomParametersToCheck ; ++i )
+		{
+			//Pick a random parameter on a random layer
+			uint32_t randomLayer;
+			Scalar* pParameter;
+			Scalar backPropGradient;
+
+			do
+			{
+				randomLayer = rand() % m_Layers.size();
+			} while( !m_Layers[randomLayer]->GetRandomParameterAndAssociatedGradient( &pParameter, backPropGradient ) );
+
+			Scalar originalParamValue = *pParameter;
+		
+			//Compute Loss( param + epsilon )
+			*pParameter = originalParamValue + epsilon;
+			Scalar error1 = ComputeError( _dataSet, _dataSetExpectedOutput );
+
+			//Compute Loss( param - epsilon )
+			*pParameter = originalParamValue - epsilon;
+			Scalar error2 = ComputeError( _dataSet, _dataSetExpectedOutput );
+
+			//Compute gradient
+			Scalar groundThruthGradient = (error1 - error2) / (2.0f * epsilon);
+
+			if( std::abs( backPropGradient - groundThruthGradient ) > gradientTolerance )
+			{
+			//	assert( false );
+				Log( "Bad gradient (%f != %f, ratio=%f) found in layer %d. Probably a back propagation bug !\n", backPropGradient, groundThruthGradient, backPropGradient / groundThruthGradient, randomLayer );
+			}
+
+			//restore the parameter
+			*pParameter = originalParamValue;
+		}
 	}
 
 }

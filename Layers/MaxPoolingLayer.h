@@ -37,7 +37,7 @@ namespace ToyDNN
 						
 						//TODO handle out of bound
 
-						float maxValue = -FLT_MAX;
+						Scalar maxValue = -FLT_MAX;
 						PixelCoord maxElemCoord;
 
 						for( uint32_t py = 0 ; py < m_PoolSizeY ; ++py )
@@ -45,7 +45,7 @@ namespace ToyDNN
 							for( uint32_t px = 0 ; px < m_PoolSizeX ; ++px )
 							{
 								uint32_t inIdx = m_InputShape.Index( x * m_PoolSizeX + px, y * m_PoolSizeY + py, z );
-								float v = _in[inIdx];
+								Scalar v = _in[inIdx];
 
 								//TODO if( IsTraining )
 								if( v > maxValue )
@@ -66,7 +66,7 @@ namespace ToyDNN
 		}
 
 		virtual void ClearWeightDeltas() override {}
-		virtual void ApplyWeightDeltas( float _learningRate ) override {}
+		virtual void ApplyWeightDeltas( Scalar _learningRate ) override {}
 
 		virtual void BackPropagation( const Tensor& _layerInputs, const Tensor& _outputGradients, Tensor& _inputGradients ) override
 		{

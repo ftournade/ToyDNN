@@ -32,8 +32,8 @@ protected:
 
 	struct LearningCurveData
 	{
-		float learningSetCost; //train-set
-		float testingSetCost; //testing-set: data never seen by the optimizer
+		Scalar learningSetCost; //train-set
+		Scalar testingSetCost; //testing-set: data never seen by the optimizer
 	};
 
 	std::vector< std::pair< uint32_t, LearningCurveData > > m_LearningCurve;

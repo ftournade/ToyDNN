@@ -19,7 +19,7 @@ namespace ToyDNN
 		}
 
 		virtual void ClearWeightDeltas() override {}
-		virtual void ApplyWeightDeltas( float _learningRate ) override {}
+		virtual void ApplyWeightDeltas( Scalar _learningRate ) override {}
 
 		virtual const Tensor& GetOutput() const override { return m_Activations; }
 
@@ -71,9 +71,9 @@ namespace ToyDNN
 	class LeakyRelu : public BaseActivationLayer
 	{
 	public:
-		LeakyRelu( float _leak=0.01f) : m_Leak( _leak )
+		LeakyRelu( Scalar _leak=0.01f) : m_Leak( _leak )
 		{
-			assert( _leak > 0.0f );
+			assert( _leak > Scalar(0.0) );
 		}
 
 		virtual void Forward( const Tensor& _in, Tensor& _out ) const override
@@ -101,7 +101,7 @@ namespace ToyDNN
 		#pragma omp parallel for
 			for( int i = 0 ; i < (int)n ; ++i )
 			{
-				float gradient = _layerInputs[i] > 0.0f ? 1.0f : m_Leak;
+				Scalar gradient = _layerInputs[i] > Scalar(0.0) ? Scalar(1.0) : m_Leak;
 
 				_inputGradients[i] = _outputGradients[i] * gradient;
 			}
@@ -109,7 +109,7 @@ namespace ToyDNN
 		}
 
 	private:
-		float m_Leak;
+		Scalar m_Leak;
 	};
 
 	//====================================================
@@ -146,7 +146,7 @@ namespace ToyDNN
 				//This one is a bit special
 				//dsigmoid(x)/dx = sigmoid(x) * (1 - sigmoid(x))
 
-				float gradient = m_Activations[i] * (1.0f - m_Activations[i]);
+				Scalar gradient = m_Activations[i] * (1.0f - m_Activations[i]);
 
 				_inputGradients[i] = _outputGradients[i] * gradient;
 			}
@@ -188,7 +188,7 @@ namespace ToyDNN
 				//This one is a bit special
 				//dtanh(x)/dx = 1 - tanh(x)
 
-				float gradient = 1.0f - m_Activations[i];
+				Scalar gradient = 1.0f - m_Activations[i];
 
 				_inputGradients[i] = _outputGradients[i] * gradient;
 			}
@@ -204,18 +204,18 @@ namespace ToyDNN
 			uint32_t n = m_OutputShape.Size();
 			_out.resize( n );
 
-			float alpha = *std::max_element( _in.begin(), _in.end() );
-			float denominator = 0;
+			Scalar alpha = *std::max_element( _in.begin(), _in.end() );
+			Scalar denominator = 0.0;
 
-			for( int i = 0; i < n; i++ )
+			for( uint32_t i = 0; i < n; i++ )
 			{
 				_out[i] = std::exp( _in[i] - alpha );
 				denominator += _out[i];
 			}
 
-			float numerator = 1.0f / denominator;
+			Scalar numerator = Scalar(1.0) / denominator;
 
-			for( int i = 0; i < n; i++ )
+			for( uint32_t i = 0; i < n; i++ )
 			{
 				_out[i] *= numerator;
 				m_Activations[i] = _out[i];
@@ -227,18 +227,18 @@ namespace ToyDNN
 			uint32_t n = m_OutputShape.Size();
 			_inputGradients.resize( n );
 
-			float* df = (float*)alloca( sizeof( float ) * n );
-			memset( df, 0, sizeof( float ) * n );
+			Scalar* df = (Scalar*)alloca( sizeof( Scalar ) * n );
+			memset( df, 0, sizeof( Scalar ) * n );
 
-			for( int j=0; j < n ; ++j )
+			for( uint32_t j=0; j < n ; ++j )
 			{
-				for( int k=0; k < n ; ++k )
+				for( uint32_t k=0; k < n ; ++k )
 				{
-					float f = (k == j) ? 1.0f : 0.0f;
+					Scalar f = (k == j) ? 1.0f : 0.0f;
 					df[k] = m_Activations[j] * (f - m_Activations[j]);
 				}
 
-				for( int k = 0; k < n ; ++k )
+				for( uint32_t k = 0; k < n ; ++k )
 				{
 					_inputGradients[j] += _outputGradients[k] * df[k];
 				}

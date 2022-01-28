@@ -7,14 +7,14 @@ namespace ToyDNN
 {
 	void Log( const char* _format, ... );
 
-	inline float Lerp( float t, float a, float b )
+	inline Scalar Lerp( Scalar t, Scalar a, Scalar b )
 	{
 		return a + t * (b - a);
 	}
 
-	inline float Random( float _min, float _max )
+	inline Scalar Random( Scalar _min, Scalar _max )
 	{
-		float u = rand() / (float)RAND_MAX;
+		Scalar u = rand() / (Scalar)RAND_MAX;
 		return Lerp( u, _min, _max );
 	}
 

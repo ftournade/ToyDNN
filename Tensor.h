@@ -4,7 +4,8 @@
 
 namespace ToyDNN
 {
-	typedef std::vector< float > Tensor;
+	typedef double Scalar;
+	typedef std::vector< Scalar > Tensor;
 
 	class TensorShape
 	{

@@ -160,6 +160,8 @@ void Example2::Tick( HDC _hdc )
 
     Scalar error = net.Train( m_Input, m_ExpectedOutput, m_Input, m_ExpectedOutput, numEpochs, batchSize, validationInterval, learningRate );
 
+    net.GradientCheck( m_Input, m_ExpectedOutput, 1000 );
+
     m_Epoch += numEpochs;
 
     m_LearningCurve.push_back( std::pair<uint32_t, LearningCurveData>( m_Epoch, { error, error } ) );
