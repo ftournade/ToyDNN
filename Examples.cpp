@@ -27,13 +27,13 @@ void BaseExample::PlotLearningCurve( HDC _hdc, const RECT& _r ) const
     {
         const auto& p = m_LearningCurve[i];
 
-        minx = min( minx, (int)p.first );
-        maxx = max( maxx, (int)p.first );
+        minx = std::min( minx, (int)p.first );
+        maxx = std::max( maxx, (int)p.first );
 
-        miny = min( miny, p.second.learningSetCost );
-        miny = min( miny, p.second.testingSetCost );
-        maxy = max( maxy, p.second.learningSetCost );
-        maxy = max( maxy, p.second.testingSetCost );
+        miny = std::min( miny, p.second.learningSetCost );
+        miny = std::min( miny, p.second.testingSetCost );
+        maxy = std::max( maxy, p.second.learningSetCost );
+        maxy = std::max( maxy, p.second.testingSetCost );
     }
 
     float xScale = (float)(_r.right - _r.left) / (float)maxx;
@@ -124,6 +124,10 @@ Example3::Example3()
 
     net.AddLayer( new Convolution2D( m_NumFeatureMaps, m_KernelSize, m_Stride ) );
     net.AddLayer( new Relu() );
+    net.AddLayer( new MaxPooling( 2, 2 ) );
+    net.AddLayer( new Convolution2D( m_NumFeatureMaps * 2, m_KernelSize, m_Stride ) );
+    net.AddLayer( new Relu() );
+    net.AddLayer( new MaxPooling( 2, 2 ) );
     net.AddLayer( new FullyConnected( 400 ) );
     net.AddLayer( new Relu() );
     net.AddLayer( new FullyConnected( 10 ) );
@@ -241,8 +245,8 @@ void Example3::DrawConvolutionLayerFeatures( HDC _hdc, uint32_t _zoom )
             {
                 float v = convOutput[ f * s * s + y * s + x ];
                 v = v * 255.0f;
-                v = min( v, 255.0f );
-                v = max( v, 0.0f );
+                v = std::min( v, 255.0f );
+                v = std::max( v, 0.0f );
 
                 DWORD col = RGB( (int)v, (int)v, (int)v );
 

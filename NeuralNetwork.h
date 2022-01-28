@@ -3,6 +3,7 @@
 #include "Layers/Activation/ActivationLayers.h"
 #include "Layers/FullyConnectedLayer.h"
 #include "Layers/Convolution2DLayer.h"
+#include "Layers/MaxPoolingLayer.h"
 
 #include <memory>
 

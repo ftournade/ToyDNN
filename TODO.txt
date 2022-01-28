@@ -1,4 +1,3 @@
-pooling
 softmax
 cost functions
 optimizers

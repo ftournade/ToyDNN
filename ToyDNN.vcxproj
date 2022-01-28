@@ -150,6 +150,7 @@
     <ClInclude Include="Layers\Activation\ActivationLayers.h" />
     <ClInclude Include="Layers\Convolution2DLayer.h" />
     <ClInclude Include="Layers\FullyConnectedLayer.h" />
+    <ClInclude Include="Layers\MaxPoolingLayer.h" />
     <ClInclude Include="NeuralNetwork.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="targetver.h" />

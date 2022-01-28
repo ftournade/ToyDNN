@@ -81,6 +81,9 @@
     <ClInclude Include="Layers\Activation\ActivationLayers.h">
       <Filter>Layers\Activation</Filter>
     </ClInclude>
+    <ClInclude Include="Layers\MaxPoolingLayer.h">
+      <Filter>Layers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ToyDNN.cpp">

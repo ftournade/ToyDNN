@@ -3,6 +3,8 @@
 #include "Tensor.h"
 #include "Util.h"
 
+#undef min
+#undef max
 #include <algorithm>
 #include <assert.h>
 
