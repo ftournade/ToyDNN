@@ -141,13 +141,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="ActivationFuncs.h" />
     <ClInclude Include="BMP.h" />
     <ClInclude Include="Datasets.h" />
     <ClInclude Include="Examples.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="JPEG.h" />
     <ClInclude Include="Layer.h" />
+    <ClInclude Include="Layers\Activation\ActivationLayers.h" />
     <ClInclude Include="Layers\Convolution2DLayer.h" />
     <ClInclude Include="Layers\FullyConnectedLayer.h" />
     <ClInclude Include="NeuralNetwork.h" />

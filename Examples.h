@@ -3,6 +3,8 @@
 #include "NeuralNetwork.h"
 #include "Datasets.h"
 
+using namespace ToyDNN;
+
 class BaseExample
 {
 public:
@@ -56,7 +58,7 @@ protected:
 	std::vector< Tensor > m_ExpectedOutput;
 };
 
-#define USE_CIFAR10_INSTEAD_OF_MNIST
+//#define USE_CIFAR10_INSTEAD_OF_MNIST
 //Basic MNIST classifier
 class Example3 : public BaseExample
 {

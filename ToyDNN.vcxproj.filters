@@ -25,6 +25,9 @@
     <Filter Include="Utils">
       <UniqueIdentifier>{0bcbb11b-e381-4496-a441-489e9d421562}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Layers\Activation">
+      <UniqueIdentifier>{cc73b5a9-2d2a-4a05-b0f5-5b957ec5a5d4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h">
@@ -57,9 +60,6 @@
     <ClInclude Include="ThirdParty\jpeg\tjpgdcnf.h">
       <Filter>ThirdParty\jpeg</Filter>
     </ClInclude>
-    <ClInclude Include="ActivationFuncs.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="JPEG.h">
       <Filter>Utils</Filter>
     </ClInclude>
@@ -77,6 +77,9 @@
     </ClInclude>
     <ClInclude Include="Layers\FullyConnectedLayer.h">
       <Filter>Layers</Filter>
+    </ClInclude>
+    <ClInclude Include="Layers\Activation\ActivationLayers.h">
+      <Filter>Layers\Activation</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
