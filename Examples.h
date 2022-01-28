@@ -58,6 +58,19 @@ protected:
 	std::vector< Tensor > m_ExpectedOutput;
 };
 
+//Curve fitting, 2-2-2 fully connected
+class Example2 : public BaseExample
+{
+public:
+	Example2();
+	virtual void Tick( HDC _hdc ) override;
+
+protected:
+	std::vector< Tensor > m_Input;
+	std::vector< Tensor > m_ExpectedOutput;
+};
+
+
 //#define USE_CIFAR10_INSTEAD_OF_MNIST
 //Basic MNIST classifier
 class Example3 : public BaseExample

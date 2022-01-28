@@ -114,6 +114,63 @@ void Example1::Tick( HDC _hdc )
 
 //-----------------------------------------
 
+Example2::Example2()
+{
+    net.AddLayer( new FullyConnected( 400 ) );
+    net.AddLayer( new FullyConnected( 1 ) );
+    net.AddLayer( new Sigmoid() );
+    net.Compile( TensorShape( 1 ) );
+
+    const uint32_t numSamples = 1000;
+    const float rangeMin = -10.0f;
+    const float rangeMax = 10.0f;
+    const float step = (rangeMax - rangeMin) / (float)numSamples;
+
+    m_Input.resize( numSamples );
+    m_ExpectedOutput.resize( numSamples );
+
+    for( uint32_t i = 0 ; i < numSamples ; ++i )
+    {
+        float x = rangeMin + step * (float)i;
+       // float y = x * std::sin( x * std::abs( std::cos( x ) ) ); //The curve we want to fit
+        float y = std::sin( x );
+
+        m_Input[i].push_back( x );
+        m_ExpectedOutput[i].push_back( y );
+    }
+
+/*
+    Tensor out;
+    net.Evaluate( m_Input[0], out );
+    float initialError = NeuralNetwork::ComputeError( out, m_ExpectedOutput[0] );
+
+    m_LearningCurve.push_back( std::pair<uint32_t, LearningCurveData>( 0, { initialError, initialError } ) );
+    */
+}
+
+void Example2::Tick( HDC _hdc )
+{
+    //Hyper parameters
+    const int numEpochs = 10000;
+    const int batchSize = 1000;
+    const int validationInterval = 1;
+    const float learningRate = 0.00002f;
+    const float errorTarget = 0.01f;
+
+
+    float error = net.Train( m_Input, m_ExpectedOutput, m_Input, m_ExpectedOutput, numEpochs, batchSize, validationInterval, learningRate );
+
+    m_Epoch += numEpochs;
+
+    m_LearningCurve.push_back( std::pair<uint32_t, LearningCurveData>( m_Epoch, { error, error } ) );
+
+    RECT r{ 10,10,800,800 };
+    PlotLearningCurve( _hdc, r );
+}
+
+//-----------------------------------------
+
+
 Example3::Example3()
 {
     srand( 111 );

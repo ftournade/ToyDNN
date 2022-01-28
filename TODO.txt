@@ -1,7 +1,6 @@
 save best weights
 Load/Save
-softmax
-cost functions
+cost functions, cross entropy etc
 optimizers
 UI & async processing
 deconv
