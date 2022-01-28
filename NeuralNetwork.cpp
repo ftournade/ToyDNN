@@ -51,9 +51,9 @@ uint32_t GetMostProbableClassIndex( const Tensor& _tensor )
 	return bestIdx;
 }
 
-void NeuralNetwork::AddLayer( std::unique_ptr<Layer> _layer ) 
+void NeuralNetwork::AddLayer( Layer* _layer ) 
 {
-	m_Layers.push_back( std::move( _layer ) ); 
+	m_Layers.push_back( std::unique_ptr<Layer>( _layer ) ); 
 }
 
 void NeuralNetwork::Compile( const TensorShape& _inputShape )

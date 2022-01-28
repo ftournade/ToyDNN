@@ -32,7 +32,7 @@ public:
 		std::fill( m_Biases.begin(), m_Biases.end(), 0.0f );
 	}
 
-	virtual void Forward( const Tensor& _in, Tensor& _out ) override
+	virtual void Forward( const Tensor& _in, Tensor& _out ) const override
 	{
 		_out.resize( m_OutputShape.Size() );
 		//std::fill( _out.begin(), _out.end(), 0.0f );
@@ -163,6 +163,6 @@ private:
 	std::vector<float> m_Biases;
 	std::vector<float> m_DeltaWeights;
 	std::vector<float> m_DeltaBiases;
-	Tensor m_NetInputs;
-	Tensor m_Activations;
+	mutable Tensor m_NetInputs;
+	mutable Tensor m_Activations;
 };

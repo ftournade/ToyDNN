@@ -77,7 +77,7 @@ void BaseExample::PlotLearningCurve( HDC _hdc, const RECT& _r ) const
 
 Example1::Example1()
 {
-    net.AddLayer( std::make_unique<FullyConnectedLayer<Activation::Sigmoid>>( 2 ) );
+    net.AddLayer( new FullyConnectedLayer<Activation::Sigmoid>( 2 ) );
     net.Compile( TensorShape( 2 ) );
 
     m_ExpectedOutput.push_back( { 0.666f, 0.333f } );
@@ -121,10 +121,10 @@ Example3::Example3()
     uint32_t numChannels = 1;
 #endif
 
-    net.AddLayer( std::make_unique<Convolution2DLayer<Activation::Relu>>( m_NumFeatureMaps, m_KernelSize, m_Stride ) );
-    net.AddLayer( std::make_unique<Convolution2DLayer<Activation::Relu>>( m_NumFeatureMaps * 2, m_KernelSize, m_Stride * 2 ) );
-    net.AddLayer( std::make_unique<FullyConnectedLayer<Activation::Relu>>( 400 ) );
-    net.AddLayer( std::make_unique<FullyConnectedLayer<Activation::Sigmoid>>( 10 ) );
+    net.AddLayer( new Convolution2DLayer<Activation::Relu>( m_NumFeatureMaps, m_KernelSize, m_Stride ) );
+    net.AddLayer( new Convolution2DLayer<Activation::Relu>( m_NumFeatureMaps * 2, m_KernelSize, m_Stride * 2 ) );
+    net.AddLayer( new FullyConnectedLayer<Activation::Relu>( 400 ) );
+    net.AddLayer( new FullyConnectedLayer<Activation::Sigmoid>( 10 ) );
     net.Compile( TensorShape( m_ImageRes, m_ImageRes, numChannels ) );
 
 #ifdef USE_CIFAR10_INSTEAD_OF_MNIST
@@ -298,8 +298,8 @@ Example4::Example4()
         inputShape = TensorShape( inputShape.m_SX / 2, inputShape.m_SY / 2, 3 );
 
 //    net.AddLayer( std::make_unique<Convolution2DLayer<Activation::Relu>>( 16, 3, 2 ) );
-    net.AddLayer( std::make_unique<FullyConnectedLayer<Activation::Relu>>( 15 ) );
-    net.AddLayer( std::make_unique<FullyConnectedLayer<Activation::Sigmoid>>( inputShape.Size() ) );
+    net.AddLayer( new FullyConnectedLayer<Activation::Relu>( 15 ) );
+    net.AddLayer( new FullyConnectedLayer<Activation::Sigmoid>( inputShape.Size() ) );
     net.Compile( inputShape );
 
     if( !LoadCelebADataset( "D:\\Dev\\DeepLearning Datasets\\CelebA", halfRes, 2.0f, 0.02f,

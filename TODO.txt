@@ -4,5 +4,6 @@ cost functions
 optimizers
 UI & async processing
 deconv
-
+gradientcheck/unit test
+confusion matrix ?
 curve fitting example

@@ -9,7 +9,7 @@
 class NeuralNetwork
 {
 public:
-	void AddLayer( std::unique_ptr<Layer> _layer );
+	void AddLayer( Layer* _layer );
 
 	void Compile( const TensorShape& _inputShape );
 
@@ -34,7 +34,7 @@ private:
 	void BackPropagation( const Tensor& _input, const Tensor& _expectedOutput );
 
 private:
-	std::vector< std::unique_ptr< Layer > > m_Layers;
+	std::vector< std::unique_ptr<Layer> > m_Layers;
 };
 
 uint32_t GetMostProbableClassIndex( const Tensor& _tensor );
