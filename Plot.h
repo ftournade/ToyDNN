@@ -18,12 +18,18 @@ public:
 class Plot
 {
 public:
+	enum Option
+	{
+		ShowXAxis = 1,
+		ShowYAxis = 2
+	};
+
 	template< typename T >
 	bool PlotCurve( const std::string& _name, const std::string& _xaxisLabel, const std::string& _yaxisLabel,
 					const Color& _color, uint32_t _lineWidth,
 					const std::vector<T>& x, const std::vector<T>& y );
-	void Draw( CDC& _dc, const CRect& _rect );
-
+	
+	void Draw( CDC& _dc, const CRect& _rect, uint32_t _options=0 );
 
 private:
 	struct Curve

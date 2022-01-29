@@ -16,7 +16,7 @@ void BaseExample::PlotLearningCurve( CDC& _dc, const CRect& _r ) const
     Plot plot;
     plot.PlotCurve( "Training error", "x", "y", Color( 1, 0, 0 ), 1, net.GetHistory().TrainingSetErrorXAxis, net.GetHistory().TrainingSetError );
     plot.PlotCurve( "Validation error", "x", "y", Color( 0, 1, 0 ), 3, net.GetHistory().ValidationSetErrorXAxis, net.GetHistory().ValidationSetError );
-    plot.Draw( _dc, _r );
+    plot.Draw( _dc, _r, Plot::ShowXAxis );
 }
 
 Example1::Example1()

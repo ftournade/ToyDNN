@@ -26,7 +26,7 @@ void Plot::PlotCurve( Curve& _curve, const std::string& _name, const std::string
 	}
 }
 
-void Plot::Draw( CDC& _dc, const CRect& _rect )
+void Plot::Draw( CDC& _dc, const CRect& _rect, uint32_t _options )
 {
 	const int margin = 50;
 
@@ -41,6 +41,17 @@ void Plot::Draw( CDC& _dc, const CRect& _rect )
 		XMax = std::max( XMax, m_Curves[i].XMax );
 		YMin = std::min( YMin, m_Curves[i].YMin );
 		YMax = std::max( YMax, m_Curves[i].YMax );
+	}
+
+	if( _options & ShowXAxis )
+	{
+		YMin = std::min( YMin, 0.0f );
+		YMax = std::max( YMax, 0.0f );
+	}
+	if( _options & ShowYAxis )
+	{
+		XMin = std::min( XMin, 0.0f );
+		XMax = std::max( XMax, 0.0f );
 	}
 
 	CRect r = _rect;
