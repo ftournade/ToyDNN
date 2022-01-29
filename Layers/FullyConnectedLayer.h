@@ -25,8 +25,6 @@ namespace ToyDNN
 			m_Biases.resize( m_OutputShape.m_SX );
 			m_DeltaBiases.resize( m_OutputShape.m_SX );
 
-			m_Output.resize( m_OutputShape.m_SX );
-
 			// https://machinelearningmastery.com/weight-initialization-for-deep-learning-neural-networks/#:~:text=each%20in%20turn.-,Xavier%20Weight%20Initialization,of%20inputs%20to%20the%20node.&text=We%20can%20implement%20this%20directly%20in%20Python.
 			Scalar xavierWeightRange = Scalar(1.0) / std::sqrt( (Scalar)m_InputShape.m_SX );
 
@@ -36,8 +34,6 @@ namespace ToyDNN
 
 		virtual void Forward( const Tensor& _in, Tensor& _out ) const override
 		{
-			_out.resize( m_OutputShape.m_SX );
-
 			#pragma omp parallel for
 			for( int i = 0 ; i < (int)m_OutputShape.m_SX ; ++i )
 			{
@@ -51,11 +47,6 @@ namespace ToyDNN
 				}
 
 				_out[i] = netSum;
-
-				//TODO if( isTraining )
-				{
-					m_Output[i] = netSum;
-				}
 			}
 		}
 
@@ -64,7 +55,6 @@ namespace ToyDNN
 			assert( m_InputShape.m_SY == 1 ); //TODO
 			assert( m_InputShape.m_SZ == 1 ); //TODO
 
-			_inputGradients.resize( m_InputShape.m_SX );
 			std::fill( _inputGradients.begin(), _inputGradients.end(), Scalar( 0.0 ) );
 
 			#pragma omp parallel for
@@ -86,9 +76,5 @@ namespace ToyDNN
 
 		}
 
-		virtual const Tensor& GetOutput() const override { return m_Output; }
-		
-	private:
-		mutable Tensor m_Output;
 	};
 }

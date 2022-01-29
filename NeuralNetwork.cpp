@@ -176,7 +176,10 @@ namespace ToyDNN
 				tensorOut = &tmpTensor[curTensor];
 			}
 
+			tensorOut->resize( m_Layers[layer]->GetOutputShape().Size() );
+
 			m_Layers[layer]->Forward( *tensorIn, *tensorOut );
+			m_Layers[layer]->CacheOutput( *tensorOut ); //For back propagation
 
 			curTensor = 1 - curTensor;//ping pong
 		}
@@ -291,6 +294,8 @@ namespace ToyDNN
 			{
 				tensorIn = &m_Layers[layer - 1]->GetOutput();
 			}
+
+			outputGradients[1 - curTensor].resize( m_Layers[layer]->GetInputShape().Size() );
 
 			m_Layers[layer]->BackPropagation( *tensorIn, outputGradients[curTensor], outputGradients[1 - curTensor] );
 

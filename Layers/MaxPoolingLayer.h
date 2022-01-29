@@ -21,14 +21,11 @@ namespace ToyDNN
 			m_InputShape = _previousLayerOutputShape;
 			m_OutputShape = TensorShape( _previousLayerOutputShape.m_SX / m_PoolSizeX, _previousLayerOutputShape.m_SY / m_PoolSizeY, _previousLayerOutputShape.m_SZ );
 
-			m_Output.resize( m_OutputShape.Size() );
 			m_MaxElement.resize( m_OutputShape.Size() );
 		}
 
 		virtual void Forward( const Tensor& _in, Tensor& _out ) const override
 		{
-			_out.resize( m_OutputShape.Size() );
-
 			for( int z = 0 ; z < (int)m_OutputShape.m_SZ ; ++z )
 			{
 				for( int y = 0 ; y < (int)m_OutputShape.m_SY ; ++y )
@@ -72,7 +69,6 @@ namespace ToyDNN
 
 		virtual void BackPropagation( const Tensor& _layerInputs, const Tensor& _outputGradients, Tensor& _inputGradients ) override
 		{
-			_inputGradients.resize( m_InputShape.Size() );
 			std::fill( _inputGradients.begin(), _inputGradients.end(), Scalar( 0.0 ) );
 				
 			for( int z = 0 ; z < (int)m_OutputShape.m_SZ ; ++z )
@@ -96,8 +92,6 @@ namespace ToyDNN
 			}
 		}
 
-		virtual const Tensor& GetOutput() const override { return m_Output; }
-
 		virtual void Load( std::istream& _stream ) override
 		{
 			Read( _stream, m_PoolSizeX );
@@ -112,7 +106,6 @@ namespace ToyDNN
 
 	private:
 		uint32_t m_PoolSizeX, m_PoolSizeY;
-		mutable Tensor m_Output;
 
 		struct PixelCoord
 		{

@@ -14,17 +14,10 @@ namespace ToyDNN
 		{
 			m_InputShape = _previousLayerOutputShape;
 			m_OutputShape = _previousLayerOutputShape;
-
-			m_Activations.resize( m_OutputShape.Size() );
 		}
 
 		virtual void ClearWeightDeltas() override {}
 		virtual void ApplyWeightDeltas( Scalar _learningRate ) override {}
-
-		virtual const Tensor& GetOutput() const override { return m_Activations; }
-
-	protected:
-		mutable Tensor m_Activations;
 	};
 
 	//====================================================
@@ -37,24 +30,17 @@ namespace ToyDNN
 		virtual void Forward( const Tensor& _in, Tensor& _out ) const override
 		{
 			uint32_t n = m_OutputShape.Size();
-			_out.resize( n );
 
 			#pragma omp parallel for
 			for( int i = 0 ; i < (int)n ; ++i )
 			{
 				_out[i] = std::max( _in[i], Scalar(0.0) );
-
-				//TODO if( isTraining )
-				{
-					m_Activations[i] = _out[i];
-				}
 			}
 		}
 
 		virtual void BackPropagation( const Tensor& _layerInputs, const Tensor& _outputGradients, Tensor& _inputGradients ) override
 		{
 			uint32_t n = m_OutputShape.Size();
-			_inputGradients.resize( n, 0.0f );
 
 			#pragma omp parallel for
 			for( int i = 0 ; i < (int)n ; ++i )
@@ -82,24 +68,17 @@ namespace ToyDNN
 		virtual void Forward( const Tensor& _in, Tensor& _out ) const override
 		{
 			uint32_t n = m_OutputShape.Size();
-			_out.resize( n );
-
+			
 			#pragma omp parallel for
 			for( int i = 0 ; i < (int)n ; ++i )
 			{
 				_out[i] = _in[i] > 0.0f ? _in[i] : _in[i] * m_Leak;
-
-				//TODO if( isTraining )
-				{
-					m_Activations[i] = _out[i];
-				}
 			}
 		}
 
 		virtual void BackPropagation( const Tensor& _layerInputs, const Tensor& _outputGradients, Tensor& _inputGradients ) override
 		{
 			uint32_t n = m_OutputShape.Size();
-			_inputGradients.resize( n );
 
 		#pragma omp parallel for
 			for( int i = 0 ; i < (int)n ; ++i )
@@ -135,24 +114,17 @@ namespace ToyDNN
 		virtual void Forward( const Tensor& _in, Tensor& _out ) const override
 		{
 			uint32_t n = m_OutputShape.Size();
-			_out.resize( n );
-
+			
 			#pragma omp parallel for
 			for( int i = 0 ; i < (int)n ; ++i )
 			{
 				_out[i] = Scalar(1.0) / (Scalar(1.0) + std::exp( -_in[i] ));
-
-				//TODO if( isTraining )
-				{
-					m_Activations[i] = _out[i];
-				}
 			}
 		}
 
 		virtual void BackPropagation( const Tensor& _layerInputs, const Tensor& _outputGradients, Tensor& _inputGradients ) override
 		{
 			uint32_t n = m_OutputShape.Size();
-			_inputGradients.resize( n );
 
 			#pragma omp parallel for
 			for( int i = 0 ; i < (int)n ; ++i )
@@ -160,7 +132,7 @@ namespace ToyDNN
 				//This one is a bit special
 				//dsigmoid(x)/dx = sigmoid(x) * (1 - sigmoid(x))
 
-				Scalar gradient = m_Activations[i] * (Scalar(1.0) - m_Activations[i]);
+				Scalar gradient = GetOutput()[i] * (Scalar(1.0) - GetOutput()[i]);
 
 				_inputGradients[i] = _outputGradients[i] * gradient;
 			}
@@ -178,24 +150,17 @@ namespace ToyDNN
 		virtual void Forward( const Tensor& _in, Tensor& _out ) const override
 		{
 			uint32_t n = m_OutputShape.Size();
-			_out.resize( n );
-
+			
 			#pragma omp parallel for
 			for( int i = 0 ; i < (int)n ; ++i )
 			{
 				_out[i] = std::tanh( _in[i] );
-
-				//TODO if( isTraining )
-				{
-					m_Activations[i] = _out[i];
-				}
 			}
 		}
 
 		virtual void BackPropagation( const Tensor& _layerInputs, const Tensor& _outputGradients, Tensor& _inputGradients ) override
 		{
 			uint32_t n = m_OutputShape.Size();
-			_inputGradients.resize( n );
 
 			#pragma omp parallel for
 			for( int i = 0 ; i < (int)n ; ++i )
@@ -203,7 +168,7 @@ namespace ToyDNN
 				//This one is a bit special
 				//dtanh(x)/dx = 1 - tanh(x)
 
-				Scalar gradient = Scalar(1.0) - m_Activations[i] * m_Activations[i];
+				Scalar gradient = Scalar(1.0) - GetOutput()[i] * GetOutput()[i];
 
 				_inputGradients[i] = _outputGradients[i] * gradient;
 			}
@@ -219,8 +184,7 @@ namespace ToyDNN
 		virtual void Forward( const Tensor& _in, Tensor& _out ) const override
 		{
 			uint32_t n = m_OutputShape.Size();
-			_out.resize( n );
-
+			
 			Scalar alpha = *std::max_element( _in.begin(), _in.end() );
 			Scalar denominator = 0.0;
 
@@ -235,14 +199,12 @@ namespace ToyDNN
 			for( uint32_t i = 0; i < n; i++ )
 			{
 				_out[i] *= numerator;
-				m_Activations[i] = _out[i];
 			}
 		}
 
 		virtual void BackPropagation( const Tensor& _layerInputs, const Tensor& _outputGradients, Tensor& _inputGradients ) override
 		{
 			uint32_t n = m_OutputShape.Size();
-			_inputGradients.resize( n );
 
 			Scalar* df = (Scalar*)alloca( sizeof( Scalar ) * n );
 			memset( df, 0, sizeof( Scalar ) * n );
@@ -252,7 +214,7 @@ namespace ToyDNN
 				for( uint32_t k=0; k < n ; ++k )
 				{
 					Scalar f = (k == j) ? Scalar(1.0) : Scalar(0.0);
-					df[k] = m_Activations[j] * (f - m_Activations[j]);
+					df[k] = GetOutput()[j] * (f - GetOutput()[j]);
 				}
 
 				for( uint32_t k = 0; k < n ; ++k )

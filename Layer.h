@@ -38,10 +38,12 @@ namespace ToyDNN
 		virtual void ApplyWeightDeltas( Scalar _learningRate ) = 0;
 		virtual void BackPropagation( const Tensor& _layerInputs, const Tensor& _outputGradients/*in*/, Tensor& _inputGradients /*out*/ ) = 0;
 		virtual bool GetRandomParameterAndAssociatedGradient( Scalar** _parameter, Scalar& _gradient ) { return false; } //used for gradient checking
-		virtual const Tensor& GetOutput() const = 0;
 
 		inline const TensorShape& GetInputShape() const { return m_InputShape; }
 		inline const TensorShape& GetOutputShape() const { return m_OutputShape; }
+		inline const Tensor& GetOutput() const { return m_Output; }
+
+		void CacheOutput( const Tensor& _output ) const { m_Output = _output; }
 
 		virtual void Load( std::istream& _stream ) 
 		{
@@ -57,6 +59,9 @@ namespace ToyDNN
 
 	protected:
 		TensorShape m_InputShape, m_OutputShape;
+
+	private:
+		mutable Tensor m_Output; //Only used during training for back propagation
 	};
 
 	class WeightsAndBiasesLayer : public Layer

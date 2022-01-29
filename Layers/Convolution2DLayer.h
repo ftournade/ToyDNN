@@ -29,17 +29,13 @@ namespace ToyDNN
 			m_Biases.resize( m_NumFeatureMaps );
 			m_DeltaBiases.resize( m_NumFeatureMaps );
 
-			m_Output.resize( m_OutputShape.Size() );
-
 			std::generate( m_Weights.begin(), m_Weights.end(), [&]() { return Random( -1.0f, 1.0f ); } );
 			std::fill( m_Biases.begin(), m_Biases.end(), 0.0f );
 		}
 
 		virtual void Forward( const Tensor& _in, Tensor& _out ) const override
 		{
-			_out.resize( m_OutputShape.Size() );
-			//std::fill( _out.begin(), _out.end(), 0.0f );
-
+			
 			Scalar* accum = (Scalar*)alloca( sizeof( Scalar ) * m_OutputShape.m_SZ );
 
 			for( uint32_t y = 0 ; y < m_OutputShape.m_SY ; ++y )
@@ -77,11 +73,6 @@ namespace ToyDNN
 						uint32_t outIdx = m_OutputShape.Index( x, y, f );
 
 						_out[outIdx] = accum[f];
-
-						//TODO if( isTraining )
-						{
-							m_Output[outIdx] = accum[f];
-						}
 					}
 				}
 			}
@@ -89,7 +80,6 @@ namespace ToyDNN
 
 		virtual void BackPropagation( const Tensor& _layerInputs, const Tensor& _outputGradients, Tensor& _inputGradients ) override
 		{
-			_inputGradients.resize( m_InputShape.Size() );
 			std::fill( _inputGradients.begin(), _inputGradients.end(), Scalar( 0.0 ) );
 
 			Scalar* dE_dN = (Scalar*)alloca( sizeof( Scalar ) * m_OutputShape.m_SZ );
@@ -134,8 +124,6 @@ namespace ToyDNN
 
 		}
 
-		virtual const Tensor& GetOutput() const override { return m_Output; }
-
 		virtual void Load( std::istream& _stream ) override
 		{
 			WeightsAndBiasesLayer::Load( _stream );
@@ -159,7 +147,5 @@ namespace ToyDNN
 	private:
 		uint32_t m_NumFeatureMaps, m_KernelSize, m_Stride;
 		TensorShape m_KernelShape;
-
-		mutable Tensor m_Output; //needed for back prop
 	};
 }
