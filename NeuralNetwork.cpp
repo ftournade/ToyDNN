@@ -219,10 +219,7 @@ namespace ToyDNN
 	//#define classification_accurary
 
 		Scalar error = 0.0;
-
-	#ifdef classification_accurary
-		uint32_t validOutputCount = 0;
-	#endif
+		uint32_t validClassificationCount = 0;
 
 		#pragma omp parallel for reduction(+:error)
 		for( int i = 0 ; i < (int)_dataSet.size() ; ++i )
@@ -230,10 +227,11 @@ namespace ToyDNN
 			Tensor out;
 			Evaluate( _dataSet[i], out );
 
-		#ifdef classification_accurary
-			if( GetMostProbableClassIndex( _dataSetExpectedOutput[i] ) == GetMostProbableClassIndex( out ) )
-				++validOutputCount;
-		#endif
+			if( m_EnableClassificationAccuracyLog )
+			{
+				if( GetMostProbableClassIndex( _dataSetExpectedOutput[i] ) == GetMostProbableClassIndex( out ) )
+					++validClassificationCount;
+			}
 
 		#if 0 //Test
 			if( i < 8 )
@@ -252,9 +250,10 @@ namespace ToyDNN
 			error += ComputeError( out, _dataSetExpectedOutput[i] );
 		}
 
-		#ifdef classification_accurary
-		Log( "accuracy: %.1f%%\n", 100.0f * (float)validOutputCount / (float)_dataSet.size() );
-		#endif
+		if( m_EnableClassificationAccuracyLog )
+		{
+			Log( "accuracy: %.1f%%\n", 100.0f * (float)validClassificationCount / (float)_dataSet.size() );
+		}
 
 		return error / (float)_dataSet.size();
 	}
@@ -317,7 +316,7 @@ namespace ToyDNN
 
 	bool NeuralNetwork::Load( const char* _filename )
 	{
-		std::ifstream fileStream( _filename, std::ifstream::binary | std::ifstream::in );
+		std::ifstream fileStream( _filename, std::ios::in | std::ios::binary );
 
 		if( !fileStream.good() )
 			return false;
@@ -328,10 +327,13 @@ namespace ToyDNN
 		{
 			ClearHistory();
 
-			while( !fileStream.eof() )
+			while( true )
 			{
-				uint16_t layerType;
-				fileStream >> layerType;
+				LayerType layerType;
+				Read( fileStream, layerType );
+
+				if( fileStream.eof() )
+					break;
 
 				Layer* pLayer = CreateLayer( (LayerType)layerType );
 				pLayer->Load( fileStream );
@@ -349,19 +351,20 @@ namespace ToyDNN
 		return true;
 	}
 
-	bool NeuralNetwork::Save( const char* _filename ) const
+	bool NeuralNetwork::Save( const char* _filename, bool _saveTrainingHistory ) const
 	{
-		std::ofstream fileStream( _filename, std::ofstream::binary | std::ofstream::out );
+		std::ofstream fileStream( _filename, std::ios::out | std::ios::binary );
 
 		if( !fileStream.good() )
 			return false;
 
 		try
 		{
+			//TODO if( _saveTrainingHistory )
 
 			for( const auto& layer : m_Layers )
 			{
-				fileStream << (uint16_t)layer->GetType();
+				Write( fileStream, layer->GetType() );
 				layer->Save( fileStream );
 			}
 		}

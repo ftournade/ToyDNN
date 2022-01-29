@@ -13,7 +13,7 @@ namespace ToyDNN
 			m_OutputShape = TensorShape( _numNeurons, 1, 1 );
 		}
 
-		virtual LayerType GetType() const { return LayerType::FullyConnected; }
+		virtual LayerType GetType() const override { return LayerType::FullyConnected; }
 
 		virtual void Setup( const TensorShape& _previousLayerOutputShape ) override
 		{

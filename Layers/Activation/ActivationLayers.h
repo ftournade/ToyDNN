@@ -32,7 +32,7 @@ namespace ToyDNN
 	class Relu : public BaseActivationLayer
 	{
 	public:
-		virtual LayerType GetType() const { return LayerType::Relu; }
+		virtual LayerType GetType() const override { return LayerType::Relu; }
 
 		virtual void Forward( const Tensor& _in, Tensor& _out ) const override
 		{
@@ -77,7 +77,7 @@ namespace ToyDNN
 			assert( _leak > Scalar(0.0) );
 		}
 
-		virtual LayerType GetType() const { return LayerType::LeakyRelu; }
+		virtual LayerType GetType() const override { return LayerType::LeakyRelu; }
 
 		virtual void Forward( const Tensor& _in, Tensor& _out ) const override
 		{
@@ -113,12 +113,12 @@ namespace ToyDNN
 
 		virtual void Load( std::istream& _stream ) override
 		{
-			_stream >> m_Leak;
+			Read( _stream, m_Leak );
 		}
 
 		virtual void Save( std::ostream& _stream ) const override
 		{
-			_stream << m_Leak;
+			Write( _stream, m_Leak );
 		}
 
 	private:
@@ -130,7 +130,7 @@ namespace ToyDNN
 	class Sigmoid : public BaseActivationLayer
 	{
 	public:
-		virtual LayerType GetType() const { return LayerType::Sigmoid; }
+		virtual LayerType GetType() const override { return LayerType::Sigmoid; }
 
 		virtual void Forward( const Tensor& _in, Tensor& _out ) const override
 		{
@@ -173,7 +173,7 @@ namespace ToyDNN
 	class Tanh : public BaseActivationLayer
 	{
 	public:
-		virtual LayerType GetType() const { return LayerType::Tanh; }
+		virtual LayerType GetType() const override { return LayerType::Tanh; }
 
 		virtual void Forward( const Tensor& _in, Tensor& _out ) const override
 		{
@@ -214,7 +214,7 @@ namespace ToyDNN
 	class SoftMax : public BaseActivationLayer
 	{
 	public:
-		virtual LayerType GetType() const { return LayerType::SoftMax; }
+		virtual LayerType GetType() const override { return LayerType::SoftMax; }
 
 		virtual void Forward( const Tensor& _in, Tensor& _out ) const override
 		{

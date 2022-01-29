@@ -8,23 +8,9 @@
 #include <algorithm>
 #include <assert.h>
 #include <cmath>
-#include <istream>
-#include <ostream>
 
 namespace ToyDNN
 {
-
-	inline std::ostream& operator<<( std::ostream& _stream, const TensorShape& _tensorShape )
-	{
-		_stream << _tensorShape.m_SX << _tensorShape.m_SY << _tensorShape.m_SZ;
-		return _stream;
-	}
-
-	inline std::istream& operator>>( std::istream& _stream, TensorShape& _tensorShape )
-	{
-		_stream >> _tensorShape.m_SX >> _tensorShape.m_SY >> _tensorShape.m_SZ;
-		return _stream;
-	}
 
 	enum class LayerType : uint16_t
 	{
@@ -59,12 +45,14 @@ namespace ToyDNN
 
 		virtual void Load( std::istream& _stream ) 
 		{
-			_stream >> m_InputShape >> m_OutputShape;
+			Read( _stream, m_InputShape );
+			Read( _stream, m_OutputShape );
 		}
 
 		virtual void Save( std::ostream& _stream ) const
 		{
-			_stream << m_InputShape << m_OutputShape;
+			Write( _stream, m_InputShape );
+			Write( _stream, m_OutputShape );
 		}
 
 	protected:
@@ -119,12 +107,12 @@ namespace ToyDNN
 			Layer::Load( _stream );
 			
 			size_t numWeights;
-			_stream >> numWeights;
+			Read( _stream, numWeights );
 			m_Weights.resize( numWeights );
 			_stream.read( (char*)&m_Weights[0], m_Weights.size() * sizeof( m_Weights[0] ) );
 
 			size_t numBiases;
-			_stream >> numBiases;
+			Read( _stream, numBiases );
 			m_Biases.resize( numBiases );
 			_stream.read( (char*)&m_Biases[0], m_Biases.size() * sizeof( m_Biases[0] ) );
 		}
@@ -133,10 +121,10 @@ namespace ToyDNN
 		{
 			Layer::Save( _stream );
 			
-			_stream << m_Weights.size();
+			Write( _stream, m_Weights.size() );
 			_stream.write( (const char*)&m_Weights[0], m_Weights.size() * sizeof( m_Weights[0] ) );
 
-			_stream << m_Biases.size();
+			Write( _stream, m_Biases.size() );
 			_stream.write( (const char*)&m_Biases[0], m_Biases.size() * sizeof( m_Biases[0] ) );
 		}
 

@@ -1,6 +1,9 @@
 #pragma once
 
 #include <stdlib.h>
+#include <istream>
+#include <ostream>
+
 #include "Tensor.h"
 
 namespace ToyDNN
@@ -19,4 +22,17 @@ namespace ToyDNN
 	}
 
 	bool WriteBMP( const char* _filename, bool _grayscale, const Tensor& _pixels, int _width, int _height );
+
+	template< typename T >
+	void Write( std::ostream& _stream, const T& _val )
+	{
+		_stream.write( (const char*)&_val, sizeof( T ) );
+	}
+
+	template< typename T >
+	void Read( std::istream& _stream, T& _val )
+	{
+		_stream.read( (char*)&_val, sizeof( T ) );
+	}
+	
 }

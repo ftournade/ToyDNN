@@ -14,7 +14,7 @@ namespace ToyDNN
 			assert( (_poolSizeX < 16) && (_poolSizeY < 16) ); //PixelCoord is 4 bit encoded
 		}
 
-		virtual LayerType GetType() const { return LayerType::MaxPooling; }
+		virtual LayerType GetType() const override { return LayerType::MaxPooling; }
 
 		virtual void Setup( const TensorShape& _previousLayerOutputShape ) override
 		{
@@ -100,12 +100,14 @@ namespace ToyDNN
 
 		virtual void Load( std::istream& _stream ) override
 		{
-			_stream >> m_PoolSizeX >> m_PoolSizeY;
+			Read( _stream, m_PoolSizeX );
+			Read( _stream, m_PoolSizeY );
 		}
 
 		virtual void Save( std::ostream& _stream ) const override
 		{
-			_stream << m_PoolSizeX << m_PoolSizeY;
+			Write( _stream, m_PoolSizeX );
+			Write( _stream, m_PoolSizeY );
 		}
 
 	private:

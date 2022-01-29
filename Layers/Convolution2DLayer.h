@@ -13,7 +13,7 @@ namespace ToyDNN
 		{
 		}
 
-		virtual LayerType GetType() const { return LayerType::Convolution2D; }
+		virtual LayerType GetType() const override { return LayerType::Convolution2D; }
 
 		virtual void Setup( const TensorShape& _previousLayerOutputShape ) override
 		{
@@ -140,14 +140,20 @@ namespace ToyDNN
 		{
 			WeightsAndBiasesLayer::Load( _stream );
 
-			_stream >> m_NumFeatureMaps >> m_KernelSize >> m_Stride >> m_KernelShape;
+			Read( _stream, m_NumFeatureMaps );
+			Read( _stream, m_KernelSize );
+			Read( _stream, m_Stride );
+			Read( _stream, m_KernelShape );
 		}
 
 		virtual void Save( std::ostream& _stream ) const override
 		{
 			WeightsAndBiasesLayer::Save( _stream );
 
-			_stream << m_NumFeatureMaps << m_KernelSize << m_Stride << m_KernelShape;
+			Write( _stream, m_NumFeatureMaps );
+			Write( _stream, m_KernelSize );
+			Write( _stream, m_Stride );
+			Write( _stream, m_KernelShape );
 		}
 
 	private:

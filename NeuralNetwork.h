@@ -30,6 +30,8 @@ namespace ToyDNN
 		static Scalar ComputeError( const Tensor& _out, const Tensor& _expectedOutput );
 		Scalar ComputeError( const std::vector<Tensor>& _validationSet, const std::vector<Tensor>& _validationSetExpectedOutput );
 
+		void EnableClassificationAccuracyLog() { m_EnableClassificationAccuracyLog = true; }
+
 		const Layer* DbgGetLayer( uint32_t _idx ) const { return m_Layers[_idx].get(); }
 
 		//Used to debug gradient computation
@@ -53,7 +55,7 @@ namespace ToyDNN
 		const History& GetHistory() const { return m_History; }
 
 		bool Load( const char* _filename );
-		bool Save( const char* _filename ) const;
+		bool Save( const char* _filename, bool _saveTrainingHistory = false ) const;
 
 	private:
 		void ClearWeightDeltas();
@@ -64,6 +66,8 @@ namespace ToyDNN
 		std::vector< std::unique_ptr<Layer> > m_Layers;
 		
 		History m_History;
+
+		bool m_EnableClassificationAccuracyLog = false;
 	};
 
 	uint32_t GetMostProbableClassIndex( const Tensor& _tensor );
