@@ -4,38 +4,26 @@
 #undef min
 #undef max
 
-bool Plot::PlotCurve(	const std::string& _name, const std::string& _xaxisLabel, const std::string& _yaxisLabel,
-						const Color& _color, uint32_t _lineWidth,
-						const std::vector<float>& _x, const std::vector<float>& _y )
+void Plot::PlotCurve( Curve& _curve, const std::string& _name, const std::string& _xaxisLabel, const std::string& _yaxisLabel,
+				const Color& _color, uint32_t _lineWidth )
 {
-	if( _x.size() != _y.size() )
-		return false;
+	_curve.LineColor = _color;
+	_curve.LineWidth = _lineWidth;
+	_curve.Name = _name;
+	_curve.XAxisLabel = _xaxisLabel;
+	_curve.YAxisLabel = _yaxisLabel;
+	_curve.XMin = FLT_MAX;
+	_curve.XMax = -FLT_MAX;
+	_curve.YMin = FLT_MAX;
+	_curve.YMax = -FLT_MAX;
 
-	Curve curve;
-	curve.LineColor = _color;
-	curve.LineWidth = _lineWidth;
-	curve.Name = _name;
-	curve.XAxisLabel = _xaxisLabel;
-	curve.YAxisLabel = _yaxisLabel;
-	curve.XMin = FLT_MAX;
-	curve.XMax = -FLT_MAX;
-	curve.YMin = FLT_MAX;
-	curve.YMax = -FLT_MAX;
-	curve.Points.resize( _x.size() );
-
-	for( size_t i = 0 ; i < _x.size() ; ++i )
+	for( const auto& pt : _curve.Points )
 	{
-		curve.Points[i] = std::make_pair( _x[i], _y[i] );
-
-		curve.XMin = std::min( curve.XMin, _x[i] );
-		curve.XMax = std::max( curve.XMax, _x[i] );
-		curve.YMin = std::min( curve.YMin, _y[i] );
-		curve.YMax = std::max( curve.YMax, _y[i] );
+		_curve.XMin = std::min( _curve.XMin, pt.first );
+		_curve.XMax = std::max( _curve.XMax, pt.first );
+		_curve.YMin = std::min( _curve.YMin, pt.second );
+		_curve.YMax = std::max( _curve.YMax, pt.second );
 	}
-
-	m_Curves.emplace_back( curve );
-
-	return true;
 }
 
 void Plot::Draw( CDC& _dc, const CRect& _rect )
