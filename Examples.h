@@ -30,16 +30,6 @@ protected:
 	HWND m_hWnd;
 	NeuralNetwork net;
 
-	struct LearningCurveData
-	{
-		Scalar learningSetCost; //train-set
-		Scalar testingSetCost; //testing-set: data never seen by the optimizer
-	};
-
-	std::vector< std::pair< uint32_t, LearningCurveData > > m_LearningCurve;
-	
-	uint32_t m_Epoch = 0;
-
 	CPen m_hBlackPen, m_hRedPen;
 
 	bool m_LMouseButtonDown = false;
@@ -105,6 +95,8 @@ private:
 	std::vector< Tensor > m_TrainingMetaData;
 	std::vector< Tensor > m_ValidationData;
 	std::vector< Tensor > m_ValidationMetaData;
+	std::vector< Tensor > m_DebugData;
+	std::vector< Tensor > m_DebugMetaData;
 
 	const RECT m_UserDrawDigitRect = { 400, 400, 600, 600 };
 	Tensor m_UserDrawnDigit;

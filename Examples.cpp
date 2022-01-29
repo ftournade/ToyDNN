@@ -3,11 +3,6 @@
 
 #include "Plot.h"
 
-void TransformCurve( const RECT& _r, float _xScale, float _yScale, int _epoch, float _error, int& _x, int& _y )
-{
-    _x = (int)(_r.left + _epoch * _xScale);
-    _y = (int)(_r.bottom - _error * _yScale);
-}
 
 BaseExample::BaseExample() : m_hWnd( NULL )
 {
@@ -15,66 +10,13 @@ BaseExample::BaseExample() : m_hWnd( NULL )
     m_hRedPen.CreatePen( PS_SOLID, 3, RGB( 255, 0, 0 ) );
 }
 
+
 void BaseExample::PlotLearningCurve( CDC& _dc, const CRect& _r ) const
 {
-    if( m_LearningCurve.empty() )
-        return;
-
-    //Find bounds
-
-    int minx = 100000000, maxx = -100000000;
-    Scalar miny = FLT_MAX, maxy = -FLT_MAX;
-
-    for( uint32_t i = 0 ; i < m_LearningCurve.size() ; ++i )
-    {
-        const auto& p = m_LearningCurve[i];
-
-        minx = std::min( minx, (int)p.first );
-        maxx = std::max( maxx, (int)p.first );
-
-        miny = std::min( miny, p.second.learningSetCost );
-        miny = std::min( miny, p.second.testingSetCost );
-        maxy = std::max( maxy, p.second.learningSetCost );
-        maxy = std::max( maxy, p.second.testingSetCost );
-    }
-
-    float xScale = (float)(_r.right - _r.left) / (float)maxx;
-    float yScale = (float)(_r.bottom - _r.top) / (float)maxy;
-
-    //Background
-    _dc.SelectStockObject( DC_BRUSH );
-    _dc.SetDCBrushColor( RGB( 200, 200, 200 ) );
-    
-    _dc.Rectangle( _r );
-
-    //Draw curve
-
-    _dc.SelectObject( m_hRedPen );
-
-    int x, y;
-    TransformCurve( _r, xScale, yScale, m_LearningCurve[0].first, m_LearningCurve[0].second.learningSetCost, x, y );
-    _dc.MoveTo( x, y );
-    
-    for( uint32_t i = 1 ; i < m_LearningCurve.size() ; ++i )
-    {
-        TransformCurve( _r, xScale, yScale, m_LearningCurve[i].first, m_LearningCurve[i].second.learningSetCost, x, y );
-
-        if( x > _r.right )
-            break;
-
-        _dc.LineTo( x, y );
-    }
-
-    //Axes
-
-    _dc.SelectObject( m_hBlackPen );
-
-    _dc.MoveTo( _r.left, _r.bottom );
-    _dc.LineTo( _r.right, _r.bottom );
-
-    _dc.MoveTo( _r.left, _r.bottom );
-    _dc.LineTo( _r.left, _r.top );
-
+    Plot plot;
+    plot.PlotCurve( "Training error", "x", "y", Color( 1, 0, 0 ), 1, net.GetHistory().TrainingSetErrorXAxis, net.GetHistory().TrainingSetError );
+    plot.PlotCurve( "Validation error", "x", "y", Color( 0, 1, 0 ), 3, net.GetHistory().ValidationSetErrorXAxis, net.GetHistory().ValidationSetError );
+    plot.Draw( _dc, _r );
 }
 
 Example1::Example1()
@@ -85,13 +27,6 @@ Example1::Example1()
 
     m_ExpectedOutput.push_back( { 0.666f, 0.333f } );
     m_Input.push_back( { 0.9f, 0.2f } );
-    
-    Tensor out;
-    net.Evaluate( m_Input[0], out );
-    Scalar initialError = NeuralNetwork::ComputeError( out, m_ExpectedOutput[0] );
-
-    m_LearningCurve.push_back( std::pair<uint32_t, LearningCurveData>( 0, { initialError, initialError } ) );
-
 }
 
 void Example1::Tick( CDC& _dc )
@@ -103,15 +38,7 @@ void Example1::Tick( CDC& _dc )
     const float learningRate = 0.5;
     const float errorTarget = 0.01f;
 
-
-    Scalar error = net.Train( m_Input, m_ExpectedOutput, m_Input, m_ExpectedOutput, numEpochs, batchSize, validationInterval, learningRate );
-     
-    m_Epoch += numEpochs;
-
-    m_LearningCurve.push_back( std::pair<uint32_t, LearningCurveData>( m_Epoch, { error, error } ) );
-
-    CRect r(10,10,800,800);
-    PlotLearningCurve( _dc, r );
+    net.Train( m_Input, m_ExpectedOutput, m_Input, m_ExpectedOutput, numEpochs, batchSize, validationInterval, learningRate );
 }
 
 //-----------------------------------------
@@ -149,31 +76,20 @@ Example2::Example2()
         m_GroundTruthYAxis[i] = y;
     }
 
-
-/*
-    Tensor out;
-    net.Evaluate( m_Input[0], out );
-    float initialError = NeuralNetwork::ComputeError( out, m_ExpectedOutput[0] );
-
-    m_LearningCurve.push_back( std::pair<uint32_t, LearningCurveData>( 0, { initialError, initialError } ) );
-    */
 }
 
 void Example2::Tick( CDC& _dc )
 {
     //Hyper parameters
     const int numEpochs = 1;
-    const int batchSize = 1000;
+    const int batchSize = 100;
     const int validationInterval = 10;
     const float learningRate = 0.00004f;
     const float errorTarget = 0.01f;
 
 
-    Scalar error = net.Train( m_Input, m_ExpectedOutput, m_Input, m_ExpectedOutput, numEpochs, batchSize, validationInterval, learningRate );
+    net.Train( m_Input, m_ExpectedOutput, m_Input, m_ExpectedOutput, numEpochs, batchSize, validationInterval, learningRate );
 
-    m_Epoch += numEpochs;
-
-    m_LearningCurve.push_back( std::pair<uint32_t, LearningCurveData>( m_Epoch, { error, error } ) );
 
   //  net.GradientCheck( m_Input, m_ExpectedOutput, 10 );
 
@@ -187,14 +103,12 @@ void Example2::Tick( CDC& _dc )
         predictedCurve[i] = out[0];
     }
 
-    CRect r( 10, 10, 800, 800 );
-
     Plot plot;
     plot.PlotCurve( "", "x", "y", Color( 1, 0, 0 ), 4, m_GroundTruthXAxis, m_GroundTruthYAxis );
     plot.PlotCurve( "", "x", "y", Color( 0, 1, 0 ), 4, m_GroundTruthXAxis, predictedCurve );
-    plot.Draw( _dc, r );
+    plot.Draw( _dc, CRect( 10, 10, 800, 800 ) );
 
-//  PlotLearningCurve( _dc, r );
+    PlotLearningCurve( _dc, CRect( 10, 900, 800, 1200 ) );
 }
 
 //-----------------------------------------
@@ -234,6 +148,19 @@ Example3::Example3()
 #endif
 
     m_UserDrawnDigit.resize( m_ImageRes * m_ImageRes, 0 );
+
+#if 0
+    int dbgSize = 1;
+
+    m_DebugData.resize( dbgSize );
+    m_DebugMetaData.resize( dbgSize );
+
+    for( int i = 0; i < dbgSize ; ++i )
+    {
+        m_DebugData[i] = m_ValidationData[i];
+        m_DebugMetaData[i] = m_ValidationMetaData[i];
+    }
+#endif
 }
 
 void Example3::Tick( CDC& _dc )
@@ -242,18 +169,14 @@ void Example3::Tick( CDC& _dc )
     const int numEpochs = 1;
     const int batchSize = 32;
     const int validationInterval = 100;
-    const float learningRate = 0.0001f;
+    const float learningRate = 0.001f;
     const float errorTarget = 0.02f;
 
     if( !m_IsTrained )
     {
-        Scalar error = net.Train( m_TrainingData, m_TrainingMetaData, m_ValidationData, m_ValidationMetaData, numEpochs, batchSize, validationInterval, learningRate, errorTarget );
+        net.Train( m_TrainingData, m_TrainingMetaData, m_ValidationData, m_ValidationMetaData, numEpochs, batchSize, validationInterval, learningRate, errorTarget );
 
-        m_Epoch += numEpochs;
-
-        m_LearningCurve.push_back( std::pair<uint32_t, LearningCurveData>( m_Epoch, { error, error } ) );
-
-        if( error < errorTarget )
+        //TODO if( error < errorTarget )
             m_IsTrained = true;
     }
     else
@@ -278,9 +201,7 @@ void Example3::Tick( CDC& _dc )
       //  DrawConvolutionLayerFeatures( _hdc, 3 ); //SLOW
     }
 
-  //  RECT r{ 10,10,300,300 };
-  //  PlotLearningCurve( _hdc, r );
-
+    PlotLearningCurve( _dc, CRect( 10, 400, 800, 800 ) );
 }
 
 void Example3::OnLMouseButtonDown( const POINT& p )

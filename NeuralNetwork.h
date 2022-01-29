@@ -18,12 +18,12 @@ namespace ToyDNN
 		void Compile( const TensorShape& _inputShape );
 
 		//Return error metric
-		Scalar Train( const std::vector<Tensor>& _trainingSet,
+		void Train(	 const std::vector<Tensor>& _trainingSet,
 					 const std::vector<Tensor>& _trainingSetExpectedOutput,
 					 const std::vector<Tensor>& _validationSet,
 					 const std::vector<Tensor>& _validationSetExpectedOutput,
 					 uint32_t _numEpochs, uint32_t _batchSize, uint32_t _validationInterval /*evaluate vaildationSet every N batch*/,
-					  Scalar _learningRate, Scalar _errorTarget = 0.0001f );
+					 Scalar _learningRate, Scalar _errorTarget = 0.0001f );
 		void Evaluate( const Tensor& _in, Tensor& _out ) const;
 
 		static void ComputeError( const Tensor& _out, const Tensor& _expectedOutput, Tensor& _error );
@@ -38,6 +38,18 @@ namespace ToyDNN
 		//Gradient = (EvalNetworkLoss( Param + epsilon ) - EvalNetworkLoss( Param - epsilon )) / (2 * epsilon)
 		void GradientCheck( const std::vector<Tensor>& _dataSet, const std::vector<Tensor>& _dataSetExpectedOutput, uint32_t _numRandomParametersToCheck );
 
+		struct History
+		{
+			std::vector<Scalar> TrainingSetErrorXAxis; //Epoch
+			std::vector<Scalar> TrainingSetError;
+			std::vector<Scalar> ValidationSetErrorXAxis; //Epoch
+			std::vector<Scalar> ValidationSetError;
+			
+			uint32_t NumEpochCompleted = 0;
+		};
+
+		const History& GetHistory() const { return m_History; }
+
 	private:
 		void ClearWeightDeltas();
 		void ApplyWeightDeltas( Scalar _learningRate );
@@ -45,6 +57,8 @@ namespace ToyDNN
 
 	private:
 		std::vector< std::unique_ptr<Layer> > m_Layers;
+		
+		History m_History;
 	};
 
 	uint32_t GetMostProbableClassIndex( const Tensor& _tensor );

@@ -74,7 +74,7 @@ namespace ToyDNN
 		}
 	}
 
-	Scalar NeuralNetwork::Train( const std::vector<Tensor>& _trainingSet,
+	void NeuralNetwork::Train( const std::vector<Tensor>& _trainingSet,
 								const std::vector<Tensor>& _trainingSetExpectedOutput,
 								const std::vector<Tensor>& _validationSet,
 								const std::vector<Tensor>& _validationSetExpectedOutput,
@@ -88,7 +88,6 @@ namespace ToyDNN
 		uint32_t numTrainingSamples = (uint32_t)_trainingSet.size();
 		uint32_t numValidationSamples = (uint32_t)_trainingSet.size();
 
-		Scalar error;
 		Tensor out;
 
 		for( uint32_t epoch = 0; epoch < _numEpochs ; ++epoch )
@@ -99,7 +98,7 @@ namespace ToyDNN
 
 				uint32_t batchSize = std::min( _batchSize, numTrainingSamples - batch * _batchSize );
 
-				error = 0.0f;
+				Scalar trainingError = Scalar(0.0);
 
 				auto start = std::chrono::steady_clock::now();
 
@@ -108,15 +107,20 @@ namespace ToyDNN
 					uint32_t sampleIndex = batch * _batchSize + batchSample;
 
 					Evaluate( _trainingSet[sampleIndex], out );
-					error += ComputeError( out, _trainingSetExpectedOutput[sampleIndex] );
+					trainingError += ComputeError( out, _trainingSetExpectedOutput[sampleIndex] );
 					BackPropagation( _trainingSet[sampleIndex], _trainingSetExpectedOutput[sampleIndex] );
 				}
 
 				auto end = std::chrono::steady_clock::now();
 				float elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() / 1000.0f;
 
-				error /= batchSize;
+				trainingError /= batchSize;
 				//Log( "epoch %d batch %d (%d samples) took %.1fs, error: %f\n", epoch, batch, batchSize, elapsedTime, error );
+
+				Scalar fEpoch = Scalar( m_History.NumEpochCompleted ) + Scalar(batch + 1) / Scalar(numTrainingSamples / _batchSize);
+
+				m_History.TrainingSetErrorXAxis.push_back( fEpoch );
+				m_History.TrainingSetError.push_back( trainingError );
 
 				ApplyWeightDeltas( _learningRate/*TODO divide by batch size ?*/ );
 
@@ -127,15 +131,19 @@ namespace ToyDNN
 				{
 					Scalar validationSetError = ComputeError( _validationSet, _validationSetExpectedOutput );
 
+					m_History.ValidationSetErrorXAxis.push_back( fEpoch );
+					m_History.ValidationSetError.push_back( validationSetError );
+
 					Log( "Validation set error: %f\n", validationSetError );
 
 					if( validationSetError <= _errorTarget )
-						return error;
+						return;
 				}
 			}
+
+			m_History.NumEpochCompleted++;
 		}
 
-		return error;
 	}
 
 	void NeuralNetwork::Evaluate( const Tensor& _in, Tensor& _out ) const
@@ -247,7 +255,7 @@ namespace ToyDNN
 		Log( "accuracy: %.1f%%\n", 100.0f * (float)validOutputCount / (float)_dataSet.size() );
 		#endif
 
-		return error;// / (float)_dataSet.size();
+		return error / (float)_dataSet.size();
 	}
 
 
