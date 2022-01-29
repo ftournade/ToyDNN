@@ -61,7 +61,7 @@ void Plot::Draw( CDC& _dc, const CRect& _rect )
 	//Draw curves
 	float xScale = r.Width() / (XMax - XMin);
 	float xBias = (float)r.left - (float)r.Width() * XMin / (XMax - XMin);
-	float yScale = r.Height() / (YMax - YMin);
+	float yScale = -r.Height() / (YMax - YMin);
 	float yBias = (float)r.top - (float)r.Height() * YMin / (YMax - YMin);
 
 	for( const auto& curve : m_Curves )
