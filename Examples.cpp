@@ -124,29 +124,33 @@ Example3::Example3()
     uint32_t numChannels = 1;
 #endif
 
-    net.AddLayer( new Convolution2D( m_NumFeatureMaps, m_KernelSize, m_Stride ) );
-    net.AddLayer( new Relu() );
-    net.AddLayer( new MaxPooling( 2, 2 ) );
-    net.AddLayer( new Convolution2D( m_NumFeatureMaps * 2, m_KernelSize, m_Stride ) );
-    net.AddLayer( new Relu() );
-    net.AddLayer( new MaxPooling( 2, 2 ) );
-    net.AddLayer( new FullyConnected( 400 ) );
-    net.AddLayer( new Relu() );
-    net.AddLayer( new FullyConnected( 10 ) );
-    net.AddLayer( new SoftMax() );
-    net.Compile( TensorShape( m_ImageRes, m_ImageRes, numChannels ) );
+    if( net.Load( m_NeuralNetFilename ) )
+    {
+        m_IsTrained = true;
+    }
+    else
+    {
+        net.AddLayer( new Convolution2D( m_NumFeatureMaps, m_KernelSize, m_Stride ) );
+        net.AddLayer( new Relu() );
+        net.AddLayer( new MaxPooling( 2, 2 ) );
+        net.AddLayer( new FullyConnected( 100 ) );
+        net.AddLayer( new Relu() );
+        net.AddLayer( new FullyConnected( 10 ) );
+        net.AddLayer( new Sigmoid() );
+        net.Compile( TensorShape( m_ImageRes, m_ImageRes, numChannels ) );
+        net.EnableClassificationAccuracyLog();
 
-#ifdef USE_CIFAR10_INSTEAD_OF_MNIST
-    if( !LoadCifar10Dataset( "D:\\Dev\\DeepLearning Datasets\\cifar10",
-                           m_TrainingData, m_ValidationData, m_TrainingMetaData, m_ValidationMetaData ) )
-        throw std::exception( "Can't load Cifar10 database" );
-#else
-    if( !LoadMnistDataset( "D:\\Dev\\DeepLearning Datasets\\MNIST",
-                           0.0f, 1.0f, 0, 0,
-                           m_TrainingData, m_ValidationData, m_TrainingMetaData, m_ValidationMetaData ) )
-        throw std::exception( "Can't load MNIST database" );
-#endif
-
+    #ifdef USE_CIFAR10_INSTEAD_OF_MNIST
+        if( !LoadCifar10Dataset( "D:\\Dev\\DeepLearning Datasets\\cifar10",
+                                 m_TrainingData, m_ValidationData, m_TrainingMetaData, m_ValidationMetaData ) )
+            throw std::exception( "Can't load Cifar10 database" );
+    #else
+        if( !LoadMnistDataset( "D:\\Dev\\DeepLearning Datasets\\MNIST",
+                               0.0f, 1.0f, 0, 0,
+                               m_TrainingData, m_ValidationData, m_TrainingMetaData, m_ValidationMetaData ) )
+            throw std::exception( "Can't load MNIST database" );
+    #endif
+    }
     m_UserDrawnDigit.resize( m_ImageRes * m_ImageRes, 0 );
 
 #if 0
@@ -168,14 +172,14 @@ void Example3::Tick( CDC& _dc )
     //Hyper parameters
     const int numEpochs = 1;
     const int batchSize = 32;
-    const int validationInterval = 100;
+    const int validationInterval = 300;
     const float learningRate = 0.001f;
     const float errorTarget = 0.02f;
 
     if( !m_IsTrained )
     {
         net.Train( m_TrainingData, m_TrainingMetaData, m_ValidationData, m_ValidationMetaData, numEpochs, batchSize, validationInterval, learningRate, errorTarget );
-
+        net.Save( m_NeuralNetFilename );
         //TODO if( error < errorTarget )
             m_IsTrained = true;
     }

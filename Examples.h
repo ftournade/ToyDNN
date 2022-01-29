@@ -82,8 +82,10 @@ private:
 
 	#ifdef USE_CIFAR10_INSTEAD_OF_MNIST
 	static const uint32_t m_ImageRes = 32;
+	const char* m_NeuralNetFilename = "D:/tmp/example3_cifar10.dnn";
 	#else
 	static const uint32_t m_ImageRes = 28;
+	const char* m_NeuralNetFilename = "D:/tmp/example3_mnist.dnn";
 	#endif
 	static const uint32_t m_NumFeatureMaps = 8;
 	static const uint32_t m_KernelSize = 3;
@@ -98,7 +100,7 @@ private:
 	std::vector< Tensor > m_DebugData;
 	std::vector< Tensor > m_DebugMetaData;
 
-	const RECT m_UserDrawDigitRect = { 400, 400, 600, 600 };
+	const RECT m_UserDrawDigitRect = { 900, 400, 1300, 800 };
 	Tensor m_UserDrawnDigit;
 	uint32_t m_RecognizedDigit = 0;
 };
