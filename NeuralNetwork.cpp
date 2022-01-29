@@ -83,6 +83,8 @@ namespace ToyDNN
 	{
 		assert( _trainingSet.size() == _trainingSetExpectedOutput.size() );
 		assert( _validationSet.size() == _validationSetExpectedOutput.size() );
+		assert( _batchSize <= _trainingSet.size() );
+
 		uint32_t numTrainingSamples = (uint32_t)_trainingSet.size();
 		uint32_t numValidationSamples = (uint32_t)_trainingSet.size();
 

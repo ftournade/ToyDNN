@@ -70,8 +70,9 @@ namespace ToyDNN
 
 		virtual void BackPropagation( const Tensor& _layerInputs, const Tensor& _outputGradients, Tensor& _inputGradients ) override
 		{
-			_inputGradients.resize( m_InputShape.Size(), 0.0f );
-
+			_inputGradients.resize( m_InputShape.Size() );
+			std::fill( _inputGradients.begin(), _inputGradients.end(), Scalar( 0.0 ) );
+				
 			for( int z = 0 ; z < (int)m_OutputShape.m_SZ ; ++z )
 			{
 				for( int y = 0 ; y < (int)m_OutputShape.m_SY ; ++y )

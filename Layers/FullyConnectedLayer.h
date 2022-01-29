@@ -28,7 +28,7 @@ namespace ToyDNN
 			// https://machinelearningmastery.com/weight-initialization-for-deep-learning-neural-networks/#:~:text=each%20in%20turn.-,Xavier%20Weight%20Initialization,of%20inputs%20to%20the%20node.&text=We%20can%20implement%20this%20directly%20in%20Python.
 			Scalar xavierWeightRange = Scalar(1.0) / std::sqrt( (Scalar)m_InputShape.m_SX );
 
-			std::generate( m_Weights.begin(), m_Weights.end(), [&]() { return Random( -xavierWeightRange, xavierWeightRange ); } );
+			std::generate( m_Weights.begin(), m_Weights.end(), [&]() { return Random(-xavierWeightRange, xavierWeightRange); });
 			std::fill( m_Biases.begin(), m_Biases.end(), 0.0f );
 		}
 
@@ -59,7 +59,11 @@ namespace ToyDNN
 
 		virtual void BackPropagation( const Tensor& _layerInputs, const Tensor& _outputGradients, Tensor& _inputGradients ) override
 		{
-			_inputGradients.resize( m_InputShape.m_SX, 0.0f );
+			assert( m_InputShape.m_SY == 1 ); //TODO
+			assert( m_InputShape.m_SZ == 1 ); //TODO
+
+			_inputGradients.resize( m_InputShape.m_SX );
+			std::fill( _inputGradients.begin(), _inputGradients.end(), Scalar( 0.0 ) );
 
 			#pragma omp parallel for
 			for( int i = 0 ; i < (int)m_OutputShape.m_SX ; ++i )
