@@ -94,12 +94,18 @@ namespace ToyDNN
 
 		virtual void Load( std::istream& _stream ) override
 		{
+			Layer::Load( _stream );
+
 			Read( _stream, m_PoolSizeX );
 			Read( _stream, m_PoolSizeY );
+
+			m_MaxElement.resize( m_OutputShape.Size() ); //TODO don't do this if only inferring
 		}
 
 		virtual void Save( std::ostream& _stream ) const override
 		{
+			Layer::Save( _stream );
+
 			Write( _stream, m_PoolSizeX );
 			Write( _stream, m_PoolSizeY );
 		}
