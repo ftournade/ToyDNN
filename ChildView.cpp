@@ -25,6 +25,11 @@ CChildView::~CChildView()
 
 BEGIN_MESSAGE_MAP(CChildView, CWnd)
 	ON_WM_PAINT()
+	ON_WM_LBUTTONDOWN()
+	ON_WM_LBUTTONUP()
+	ON_WM_RBUTTONDOWN()
+	ON_WM_RBUTTONUP()
+	ON_WM_MOUSEMOVE()
 END_MESSAGE_MAP()
 
 
@@ -70,3 +75,43 @@ void CChildView::OnPaint()
 	Invalidate( FALSE );
 }
 
+
+
+void CChildView::OnLButtonDown( UINT nFlags, CPoint point )
+{
+	theApp.m_Example.OnLMouseButtonDown( point );
+
+	CWnd::OnLButtonDown( nFlags, point );
+}
+
+
+void CChildView::OnLButtonUp( UINT nFlags, CPoint point )
+{
+	theApp.m_Example.OnLMouseButtonUp( point );
+
+	CWnd::OnLButtonUp( nFlags, point );
+}
+
+
+void CChildView::OnRButtonDown( UINT nFlags, CPoint point )
+{
+	theApp.m_Example.OnRMouseButtonDown( point );
+
+	CWnd::OnRButtonDown( nFlags, point );
+}
+
+
+void CChildView::OnRButtonUp( UINT nFlags, CPoint point )
+{
+	theApp.m_Example.OnRMouseButtonUp( point );
+
+	CWnd::OnRButtonUp( nFlags, point );
+}
+
+
+void CChildView::OnMouseMove( UINT nFlags, CPoint point )
+{
+	theApp.m_Example.OnMouseMove( point );
+
+	CWnd::OnMouseMove( nFlags, point );
+}
