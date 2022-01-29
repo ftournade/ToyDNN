@@ -215,6 +215,7 @@
     <ClCompile Include="Datasets.cpp" />
     <ClCompile Include="Examples.cpp" />
     <ClCompile Include="JPEG.cpp" />
+    <ClCompile Include="LayerFactory.cpp" />
     <ClCompile Include="MainFrm.cpp" />
     <ClCompile Include="NeuralNetwork.cpp" />
     <ClCompile Include="pch.cpp">
@@ -245,6 +246,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="res\ToyDNN.rc2" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="TODO.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

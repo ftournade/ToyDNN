@@ -8,10 +8,12 @@ namespace ToyDNN
 	class Convolution2D : public WeightsAndBiasesLayer
 	{
 	public:
-		Convolution2D( uint32_t _numFeatureMaps, uint32_t _kernelSize, uint32_t _stride = 1 )
+		Convolution2D( uint32_t _numFeatureMaps=0, uint32_t _kernelSize=0, uint32_t _stride = 1 )
 			: m_NumFeatureMaps( _numFeatureMaps ), m_KernelSize( _kernelSize ), m_Stride( _stride )
 		{
 		}
+
+		virtual LayerType GetType() const { return LayerType::Convolution2D; }
 
 		virtual void Setup( const TensorShape& _previousLayerOutputShape ) override
 		{
@@ -134,6 +136,19 @@ namespace ToyDNN
 
 		virtual const Tensor& GetOutput() const override { return m_Output; }
 
+		virtual void Load( std::istream& _stream ) override
+		{
+			WeightsAndBiasesLayer::Load( _stream );
+
+			_stream >> m_NumFeatureMaps >> m_KernelSize >> m_Stride >> m_KernelShape;
+		}
+
+		virtual void Save( std::ostream& _stream ) const override
+		{
+			WeightsAndBiasesLayer::Save( _stream );
+
+			_stream << m_NumFeatureMaps << m_KernelSize << m_Stride << m_KernelShape;
+		}
 
 	private:
 		uint32_t m_NumFeatureMaps, m_KernelSize, m_Stride;

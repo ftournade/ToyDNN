@@ -8,10 +8,12 @@ namespace ToyDNN
 	class FullyConnected : public WeightsAndBiasesLayer
 	{
 	public:
-		FullyConnected( uint32_t _numNeurons )
+		FullyConnected( uint32_t _numNeurons=0 )
 		{
 			m_OutputShape = TensorShape( _numNeurons, 1, 1 );
 		}
+
+		virtual LayerType GetType() const { return LayerType::FullyConnected; }
 
 		virtual void Setup( const TensorShape& _previousLayerOutputShape ) override
 		{

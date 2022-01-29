@@ -3,6 +3,7 @@
 #include "Util.h"
 #include "BMP.h"
 #include <chrono>
+#include <fstream>
 /*
 Back-propagation
 	E: error
@@ -302,6 +303,75 @@ namespace ToyDNN
 	{
 		for( auto& layer : m_Layers )
 			layer->ApplyWeightDeltas( _learningRate );
+	}
+
+	void NeuralNetwork::ClearHistory()
+	{
+		m_History.TrainingSetErrorXAxis.clear();
+		m_History.TrainingSetError.clear();
+		m_History.ValidationSetErrorXAxis.clear();
+		m_History.ValidationSetError.clear();
+
+		m_History.NumEpochCompleted = 0;
+	}
+
+	bool NeuralNetwork::Load( const char* _filename )
+	{
+		std::ifstream fileStream( _filename, std::ifstream::binary | std::ifstream::in );
+
+		if( !fileStream.good() )
+			return false;
+
+		m_Layers.clear();
+
+		try
+		{
+			ClearHistory();
+
+			while( !fileStream.eof() )
+			{
+				uint16_t layerType;
+				fileStream >> layerType;
+
+				Layer* pLayer = CreateLayer( (LayerType)layerType );
+				pLayer->Load( fileStream );
+
+				m_Layers.push_back( std::unique_ptr<Layer>( pLayer ) );
+			}
+		
+		}
+		catch( ... )
+		{
+			Log( "Failed to load %s !\n", _filename );
+			return false;
+		}
+
+		return true;
+	}
+
+	bool NeuralNetwork::Save( const char* _filename ) const
+	{
+		std::ofstream fileStream( _filename, std::ofstream::binary | std::ofstream::out );
+
+		if( !fileStream.good() )
+			return false;
+
+		try
+		{
+
+			for( const auto& layer : m_Layers )
+			{
+				fileStream << (uint16_t)layer->GetType();
+				layer->Save( fileStream );
+			}
+		}
+		catch( ... )
+		{
+			Log( "Failed to save %s !\n", _filename );
+			return false;
+		}
+
+		return true;
 	}
 
 	void NeuralNetwork::GradientCheck( const std::vector<Tensor>& _dataSet, const std::vector<Tensor>& _dataSetExpectedOutput, uint32_t _numRandomParametersToCheck )

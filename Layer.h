@@ -7,15 +7,45 @@
 #undef max
 #include <algorithm>
 #include <assert.h>
+#include <cmath>
+#include <istream>
+#include <ostream>
 
 namespace ToyDNN
 {
+
+	inline std::ostream& operator<<( std::ostream& _stream, const TensorShape& _tensorShape )
+	{
+		_stream << _tensorShape.m_SX << _tensorShape.m_SY << _tensorShape.m_SZ;
+		return _stream;
+	}
+
+	inline std::istream& operator>>( std::istream& _stream, TensorShape& _tensorShape )
+	{
+		_stream >> _tensorShape.m_SX >> _tensorShape.m_SY >> _tensorShape.m_SZ;
+		return _stream;
+	}
+
+	enum class LayerType : uint16_t
+	{
+		FullyConnected,
+		Convolution2D,
+		MaxPooling,
+
+		Relu,
+		LeakyRelu,
+		Sigmoid,
+		Tanh,
+		SoftMax
+	};
 
 	class Layer
 	{
 	public:
 		Layer() {}
 		virtual ~Layer() {}
+
+		virtual LayerType GetType() const = 0;
 		virtual void Setup( const TensorShape& _previousLayerOutputShape ) = 0;
 		virtual void Forward( const Tensor& _in, Tensor& _out ) const = 0;
 		virtual void ClearWeightDeltas() = 0;
@@ -26,6 +56,16 @@ namespace ToyDNN
 
 		inline const TensorShape& GetInputShape() const { return m_InputShape; }
 		inline const TensorShape& GetOutputShape() const { return m_OutputShape; }
+
+		virtual void Load( std::istream& _stream ) 
+		{
+			_stream >> m_InputShape >> m_OutputShape;
+		}
+
+		virtual void Save( std::ostream& _stream ) const
+		{
+			_stream << m_InputShape << m_OutputShape;
+		}
 
 	protected:
 		TensorShape m_InputShape, m_OutputShape;
@@ -74,6 +114,32 @@ namespace ToyDNN
 			return true;
 		}
 
+		virtual void Load( std::istream& _stream ) override
+		{
+			Layer::Load( _stream );
+			
+			size_t numWeights;
+			_stream >> numWeights;
+			m_Weights.resize( numWeights );
+			_stream.read( (char*)&m_Weights[0], m_Weights.size() * sizeof( m_Weights[0] ) );
+
+			size_t numBiases;
+			_stream >> numBiases;
+			m_Biases.resize( numBiases );
+			_stream.read( (char*)&m_Biases[0], m_Biases.size() * sizeof( m_Biases[0] ) );
+		}
+
+		virtual void Save( std::ostream& _stream ) const override
+		{
+			Layer::Save( _stream );
+			
+			_stream << m_Weights.size();
+			_stream.write( (const char*)&m_Weights[0], m_Weights.size() * sizeof( m_Weights[0] ) );
+
+			_stream << m_Biases.size();
+			_stream.write( (const char*)&m_Biases[0], m_Biases.size() * sizeof( m_Biases[0] ) );
+		}
+
 	protected:
 		std::vector<Scalar> m_Weights;
 		std::vector<Scalar> m_Biases;
@@ -81,4 +147,5 @@ namespace ToyDNN
 		std::vector<Scalar> m_DeltaBiases;
 	};
 
+	Layer* CreateLayer( LayerType _type );
 }

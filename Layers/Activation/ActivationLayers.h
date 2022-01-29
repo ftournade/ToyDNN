@@ -32,6 +32,7 @@ namespace ToyDNN
 	class Relu : public BaseActivationLayer
 	{
 	public:
+		virtual LayerType GetType() const { return LayerType::Relu; }
 
 		virtual void Forward( const Tensor& _in, Tensor& _out ) const override
 		{
@@ -76,6 +77,8 @@ namespace ToyDNN
 			assert( _leak > Scalar(0.0) );
 		}
 
+		virtual LayerType GetType() const { return LayerType::LeakyRelu; }
+
 		virtual void Forward( const Tensor& _in, Tensor& _out ) const override
 		{
 			uint32_t n = m_OutputShape.Size();
@@ -108,6 +111,16 @@ namespace ToyDNN
 
 		}
 
+		virtual void Load( std::istream& _stream ) override
+		{
+			_stream >> m_Leak;
+		}
+
+		virtual void Save( std::ostream& _stream ) const override
+		{
+			_stream << m_Leak;
+		}
+
 	private:
 		Scalar m_Leak;
 	};
@@ -117,6 +130,7 @@ namespace ToyDNN
 	class Sigmoid : public BaseActivationLayer
 	{
 	public:
+		virtual LayerType GetType() const { return LayerType::Sigmoid; }
 
 		virtual void Forward( const Tensor& _in, Tensor& _out ) const override
 		{
@@ -159,6 +173,7 @@ namespace ToyDNN
 	class Tanh : public BaseActivationLayer
 	{
 	public:
+		virtual LayerType GetType() const { return LayerType::Tanh; }
 
 		virtual void Forward( const Tensor& _in, Tensor& _out ) const override
 		{
@@ -199,6 +214,8 @@ namespace ToyDNN
 	class SoftMax : public BaseActivationLayer
 	{
 	public:
+		virtual LayerType GetType() const { return LayerType::SoftMax; }
+
 		virtual void Forward( const Tensor& _in, Tensor& _out ) const override
 		{
 			uint32_t n = m_OutputShape.Size();

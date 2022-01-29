@@ -149,6 +149,9 @@
     <ClCompile Include="Win32BackBuffer.cpp">
       <Filter>UI\MFC</Filter>
     </ClCompile>
+    <ClCompile Include="LayerFactory.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ToyDNN.rc">
@@ -173,5 +176,8 @@
     <None Include="res\ToyDNN.rc2">
       <Filter>Resource Files</Filter>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="TODO.txt" />
   </ItemGroup>
 </Project>

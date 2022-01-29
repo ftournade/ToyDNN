@@ -38,6 +38,8 @@ namespace ToyDNN
 		//Gradient = (EvalNetworkLoss( Param + epsilon ) - EvalNetworkLoss( Param - epsilon )) / (2 * epsilon)
 		void GradientCheck( const std::vector<Tensor>& _dataSet, const std::vector<Tensor>& _dataSetExpectedOutput, uint32_t _numRandomParametersToCheck );
 
+		void ClearHistory();
+
 		struct History
 		{
 			std::vector<Scalar> TrainingSetErrorXAxis; //Epoch
@@ -49,6 +51,9 @@ namespace ToyDNN
 		};
 
 		const History& GetHistory() const { return m_History; }
+
+		bool Load( const char* _filename );
+		bool Save( const char* _filename ) const;
 
 	private:
 		void ClearWeightDeltas();
