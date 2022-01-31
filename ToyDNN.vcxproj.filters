@@ -108,6 +108,9 @@
     <ClInclude Include="Win32BackBuffer.h">
       <Filter>UI\MFC</Filter>
     </ClInclude>
+    <ClInclude Include="ControlPane.h">
+      <Filter>UI\MFC</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ChildView.cpp">
@@ -150,7 +153,10 @@
       <Filter>UI\MFC</Filter>
     </ClCompile>
     <ClCompile Include="LayerFactory.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="ControlPane.cpp">
+      <Filter>UI\MFC</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -1,9 +1,6 @@
-
-// MainFrm.h : interface of the CMainFrame class
-//
-
 #pragma once
 #include "ChildView.h"
+#include "ControlPane.h"
 
 class CMainFrame : public CFrameWndEx
 {
@@ -37,6 +34,7 @@ protected:  // control bar embedded members
 	CMFCMenuBar       m_wndMenuBar;
 	CMFCToolBar       m_wndToolBar;
 	CMFCToolBarImages m_UserImages;
+	CControlPane      m_wndDlgBar;
 	CChildView    m_wndView;
 
 // Generated message map functions

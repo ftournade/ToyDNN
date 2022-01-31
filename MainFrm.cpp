@@ -12,8 +12,6 @@
 #define new DEBUG_NEW
 #endif
 
-// CMainFrame
-
 IMPLEMENT_DYNAMIC(CMainFrame, CFrameWndEx)
 
 const int  iMaxUserToolbars = 10;
@@ -62,7 +60,7 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 		TRACE0("Failed to create view window\n");
 		return -1;
 	}
-
+	
 	if (!m_wndToolBar.CreateEx(this, TBSTYLE_FLAT, WS_CHILD | WS_VISIBLE | CBRS_TOP | CBRS_GRIPPER | CBRS_TOOLTIPS | CBRS_FLYBY | CBRS_SIZE_DYNAMIC) ||
 		!m_wndToolBar.LoadToolBar(theApp.m_bHiColorIcons ? IDR_MAINFRAME_256 : IDR_MAINFRAME))
 	{
@@ -96,8 +94,21 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	// enable Visual Studio 2005 style docking window auto-hide behavior
 	EnableAutoHidePanes(CBRS_ALIGN_ANY);
 
+	if( !m_wndDlgBar.Create( _T( "Controls" ), this, TRUE,
+							 IDD_CONTROL_PANE,
+							 WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | CBRS_LEFT | CBRS_FLOAT_MULTI,
+							 ID_CONTROLPANE ) )
+	{
+		TRACE0( "Failed to create Dialog Bar\n" );
+		return -1; // fail to create
+	}
+
+	m_wndDlgBar.EnableDocking( CBRS_ALIGN_ANY);
+	DockPane(&m_wndDlgBar);
+ 
 	// Enable toolbar and docking window menu replacement
 	EnablePaneMenu(TRUE, ID_VIEW_CUSTOMIZE, strCustomize, ID_VIEW_TOOLBAR);
+	
 
 	// enable quick (Alt+drag) toolbar customization
 	CMFCToolBar::EnableQuickCustomization();

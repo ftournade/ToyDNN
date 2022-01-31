@@ -186,6 +186,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="BMP.h" />
+    <ClInclude Include="ControlPane.h" />
     <ClInclude Include="ChildView.h" />
     <ClInclude Include="Datasets.h" />
     <ClInclude Include="Examples.h" />
@@ -211,6 +212,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="BMP.cpp" />
+    <ClCompile Include="ControlPane.cpp" />
     <ClCompile Include="ChildView.cpp" />
     <ClCompile Include="Datasets.cpp" />
     <ClCompile Include="Examples.cpp" />
