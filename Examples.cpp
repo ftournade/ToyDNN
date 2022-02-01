@@ -49,13 +49,15 @@ Example2::Example2()
 {
     srand( 666 );
 
-    m_NeuralNet.AddLayer( new FullyConnected( 20 ) );
-    m_NeuralNet.AddLayer( new Sigmoid() );
+    m_NeuralNet.AddLayer( new FullyConnected( 100 ) );
+    m_NeuralNet.AddLayer( new LeakyRelu() );
+    m_NeuralNet.AddLayer( new FullyConnected( 100 ) );
+    m_NeuralNet.AddLayer( new LeakyRelu() );
     m_NeuralNet.AddLayer( new FullyConnected( 1 ) );
     m_NeuralNet.AddLayer( new Tanh() );
     m_NeuralNet.Compile( TensorShape( 1 ) );
 
-    const uint32_t numSamples = 400;
+    const uint32_t numSamples = 1000;
     const float rangeMin = -10.0f;
     const float rangeMax = 10.0f;
     const float step = (rangeMax - rangeMin) / (float)numSamples;
@@ -68,13 +70,13 @@ Example2::Example2()
     for( uint32_t i = 0 ; i < numSamples ; ++i )
     {
         float x = rangeMin + step * (float)i;
-       // float y = x * std::sin( x * std::abs( std::cos( x ) ) ); //The curve we want to fit
+       // float y = std::sin( x * std::abs( std::cos( x ) ) ); //The curve we want to fit
         float y = std::sin( x );
 
-        m_Input[i].push_back( x );
+        m_Input[i].push_back( x / 20.0f );
         m_ExpectedOutput[i].push_back( y );
     
-        m_GroundTruthXAxis[i] = x;
+        m_GroundTruthXAxis[i] = x / 20.0f;
         m_GroundTruthYAxis[i] = y;
     }
 
