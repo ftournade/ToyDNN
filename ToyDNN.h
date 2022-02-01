@@ -33,7 +33,7 @@ public:
 	DECLARE_MESSAGE_MAP()
 
 public:
-	Example2 m_Example;
+	std::unique_ptr<BaseExample> m_pExample;
 };
 
 extern CToyDNNApp theApp;

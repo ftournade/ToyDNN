@@ -17,6 +17,10 @@ protected:
 	afx_msg void OnStartStopTraining();
 	afx_msg void OnResetTraining();
 
+	afx_msg void OnTimer( UINT_PTR );
+
+	afx_msg void OnUpdateUI( CCmdUI* pCmdUI );
+	
 	virtual void DoDataExchange( CDataExchange* pDX );
 
 	CComboBox m_SelectExample;
@@ -25,4 +29,6 @@ protected:
 	UINT m_ValidationInterval = 10;
 
 	BOOL m_IsTraining = FALSE;
+
+	UINT_PTR m_DisplayRefreshTimer = 0;
 };

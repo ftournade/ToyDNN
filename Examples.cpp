@@ -14,22 +14,24 @@ BaseExample::BaseExample() : m_hWnd( NULL )
 void BaseExample::PlotLearningCurve( CDC& _dc, const CRect& _r ) const
 {
     Plot plot;
-    plot.PlotCurve( "Training error", "x", "y", Color( 1, 0, 0 ), 1, net.GetHistory().TrainingSetErrorXAxis, net.GetHistory().TrainingSetError );
-    plot.PlotCurve( "Validation error", "x", "y", Color( 0, 1, 0 ), 3, net.GetHistory().ValidationSetErrorXAxis, net.GetHistory().ValidationSetError );
+    plot.PlotCurve( "Training error", "x", "y", Color( 1, 0, 0 ), 1, m_NeuralNet.GetHistory().TrainingSetErrorXAxis, m_NeuralNet.GetHistory().TrainingSetError );
+    plot.PlotCurve( "Validation error", "x", "y", Color( 0, 1, 0 ), 3, m_NeuralNet.GetHistory().ValidationSetErrorXAxis, m_NeuralNet.GetHistory().ValidationSetError );
     plot.Draw( _dc, _r, Plot::ShowXAxis );
 }
 
+//=========================================
+
 Example1::Example1()
 {
-    net.AddLayer( new FullyConnected( 2 ) );
-    net.AddLayer( new Sigmoid() );
-    net.Compile( TensorShape( 2 ) );
+    m_NeuralNet.AddLayer( new FullyConnected( 2 ) );
+    m_NeuralNet.AddLayer( new Sigmoid() );
+    m_NeuralNet.Compile( TensorShape( 2 ) );
 
     m_ExpectedOutput.push_back( { 0.666f, 0.333f } );
     m_Input.push_back( { 0.9f, 0.2f } );
 }
 
-void Example1::Tick( CDC& _dc )
+void Example1::Draw( CDC& _dc )
 {
     //Hyper parameters
     const int numEpochs = 100;
@@ -38,7 +40,7 @@ void Example1::Tick( CDC& _dc )
     const float learningRate = 0.5;
     const float errorTarget = 0.01f;
 
-    net.Train( m_Input, m_ExpectedOutput, m_Input, m_ExpectedOutput, numEpochs, batchSize, validationInterval, learningRate );
+    m_NeuralNet.Train( m_Input, m_ExpectedOutput, m_Input, m_ExpectedOutput, numEpochs, batchSize, validationInterval, learningRate );
 }
 
 //-----------------------------------------
@@ -47,11 +49,11 @@ Example2::Example2()
 {
     srand( 666 );
 
-    net.AddLayer( new FullyConnected( 20 ) );
-    net.AddLayer( new Sigmoid() );
-    net.AddLayer( new FullyConnected( 1 ) );
-    net.AddLayer( new Tanh() );
-    net.Compile( TensorShape( 1 ) );
+    m_NeuralNet.AddLayer( new FullyConnected( 20 ) );
+    m_NeuralNet.AddLayer( new Sigmoid() );
+    m_NeuralNet.AddLayer( new FullyConnected( 1 ) );
+    m_NeuralNet.AddLayer( new Tanh() );
+    m_NeuralNet.Compile( TensorShape( 1 ) );
 
     const uint32_t numSamples = 400;
     const float rangeMin = -10.0f;
@@ -78,20 +80,33 @@ Example2::Example2()
 
 }
 
-void Example2::Tick( CDC& _dc )
+void Example2::TrainingThread( const HyperParameters& _params )
 {
     //Hyper parameters
-    const int numEpochs = 1;
-    const int batchSize = 100;
-    const int validationInterval = 10;
-    const float learningRate = 0.00004f;
-    const float errorTarget = 0.01f;
+    const int numEpochs = 10000000;
+    const float errorTarget = 0.0000001f;
+
+    while( true )
+    {
+        while( m_IsTrainingPaused )
+        {
+            //Pause training while the UI is drawn and potentially accesses the neural net
+            //We could have used a mutex instead, but it is cheaper that way
+            Sleep( 100 ); 
+        }
+
+        m_NeuralNet.Train( m_Input, m_ExpectedOutput, m_Input, m_ExpectedOutput,
+                           numEpochs, _params.BatchSize, _params.ValidationInterval, _params.LearningRate );
+    
+        if( !m_IsTrainingPaused )
+            return;
+    }
+}
 
 
-    net.Train( m_Input, m_ExpectedOutput, m_Input, m_ExpectedOutput, numEpochs, batchSize, validationInterval, learningRate );
-
-
-  //  net.GradientCheck( m_Input, m_ExpectedOutput, 10 );
+void Example2::Draw( CDC& _dc )
+{
+  //  m_NeuralNet.GradientCheck( m_Input, m_ExpectedOutput, 10 );
 
     std::vector< Scalar > predictedCurve( m_GroundTruthXAxis.size() );
 
@@ -99,7 +114,7 @@ void Example2::Tick( CDC& _dc )
     {
         Tensor in, out;
         in.push_back( m_GroundTruthXAxis[i] );
-        net.Evaluate( in, out );
+        m_NeuralNet.Evaluate( in, out );
         predictedCurve[i] = out[0];
     }
 
@@ -124,21 +139,21 @@ Example3::Example3()
     uint32_t numChannels = 1;
 #endif
 
-    if( net.Load( m_NeuralNetFilename ) )
+    if( m_NeuralNet.Load( m_NeuralNetFilename ) )
     {
         m_IsTrained = true;
     }
     else
     {
-        net.AddLayer( new Convolution2D( m_NumFeatureMaps, m_KernelSize, m_Stride ) );
-        net.AddLayer( new Relu() );
-        net.AddLayer( new MaxPooling( 2, 2 ) );
-        net.AddLayer( new FullyConnected( 100 ) );
-        net.AddLayer( new Relu() );
-        net.AddLayer( new FullyConnected( 10 ) );
-        net.AddLayer( new Sigmoid() );
-        net.Compile( TensorShape( m_ImageRes, m_ImageRes, numChannels ) );
-        net.EnableClassificationAccuracyLog();
+        m_NeuralNet.AddLayer( new Convolution2D( m_NumFeatureMaps, m_KernelSize, m_Stride ) );
+        m_NeuralNet.AddLayer( new Relu() );
+        m_NeuralNet.AddLayer( new MaxPooling( 2, 2 ) );
+        m_NeuralNet.AddLayer( new FullyConnected( 100 ) );
+        m_NeuralNet.AddLayer( new Relu() );
+        m_NeuralNet.AddLayer( new FullyConnected( 10 ) );
+        m_NeuralNet.AddLayer( new Sigmoid() );
+        m_NeuralNet.Compile( TensorShape( m_ImageRes, m_ImageRes, numChannels ) );
+        m_NeuralNet.EnableClassificationAccuracyLog();
 
     #ifdef USE_CIFAR10_INSTEAD_OF_MNIST
         if( !LoadCifar10Dataset( "D:\\Dev\\DeepLearning Datasets\\cifar10",
@@ -167,7 +182,7 @@ Example3::Example3()
 #endif
 }
 
-void Example3::Tick( CDC& _dc )
+void Example3::Draw( CDC& _dc )
 {
     //Hyper parameters
     const int numEpochs = 1;
@@ -178,8 +193,8 @@ void Example3::Tick( CDC& _dc )
 
     if( !m_IsTrained )
     {
-        net.Train( m_TrainingData, m_TrainingMetaData, m_ValidationData, m_ValidationMetaData, numEpochs, batchSize, validationInterval, learningRate, errorTarget );
-        net.Save( m_NeuralNetFilename );
+        m_NeuralNet.Train( m_TrainingData, m_TrainingMetaData, m_ValidationData, m_ValidationMetaData, numEpochs, batchSize, validationInterval, learningRate, errorTarget );
+        m_NeuralNet.Save( m_NeuralNetFilename );
         //TODO if( error < errorTarget )
             m_IsTrained = true;
     }
@@ -190,7 +205,7 @@ void Example3::Tick( CDC& _dc )
         if( frame++ % 60 == 0 ) //Don't update every frame
         {
             Tensor out;
-            net.Evaluate( m_UserDrawnDigit, out );
+            m_NeuralNet.Evaluate( m_UserDrawnDigit, out );
             m_RecognizedDigit = GetMostProbableClassIndex( out );
         }
         
@@ -248,7 +263,7 @@ void Example3::DrawConvolutionLayerFeatures( CDC& _dc, uint32_t _zoom )
 {
     uint32_t s = (m_ImageRes - m_KernelSize + 1) / (m_Stride * m_Stride);
 
-    const Tensor& convOutput = net.DbgGetLayer( 0 )->GetOutput();
+    const Tensor& convOutput = m_NeuralNet.DbgGetLayer( 0 )->GetOutput();
 
     for( uint32_t f = 0 ; f < m_NumFeatureMaps ; ++f )
     {
@@ -318,20 +333,20 @@ Example4::Example4()
     if( halfRes )
         inputShape = TensorShape( inputShape.m_SX / 2, inputShape.m_SY / 2, 3 );
 
-//    net.AddLayer( new Convolution2D( 16, 3, 2 ) );
-//    net.AddLayer( new Relu() );
-    net.AddLayer( new FullyConnected( 15 ) );
-    net.AddLayer( new Relu() );
-    net.AddLayer( new FullyConnected( inputShape.Size() ) );
-    net.AddLayer( new Sigmoid() );
-    net.Compile( inputShape );
+//    m_NeuralNet.AddLayer( new Convolution2D( 16, 3, 2 ) );
+//    m_NeuralNet.AddLayer( new Relu() );
+    m_NeuralNet.AddLayer( new FullyConnected( 15 ) );
+    m_NeuralNet.AddLayer( new Relu() );
+    m_NeuralNet.AddLayer( new FullyConnected( inputShape.Size() ) );
+    m_NeuralNet.AddLayer( new Sigmoid() );
+    m_NeuralNet.Compile( inputShape );
 
     if( !LoadCelebADataset( "D:\\Dev\\DeepLearning Datasets\\CelebA", halfRes, 2.0f, 0.02f,
                             m_TrainingData, m_ValidationData, m_TrainingMetaData, m_ValidationMetaData ) )
         throw std::exception("Can't load celebA database");
 }
 
-void Example4::Tick( CDC& _dc )
+void Example4::Draw( CDC& _dc )
 {
     //Hyper parameters
     const int numEpochs = 100;
@@ -340,5 +355,5 @@ void Example4::Tick( CDC& _dc )
     const float learningRate = 0.002f;
     const float errorTarget = 0.04f;
 
-    net.Train( m_TrainingData, m_TrainingData, m_ValidationData, m_ValidationData, numEpochs, batchSize, validationInterval, learningRate, errorTarget );
+    m_NeuralNet.Train( m_TrainingData, m_TrainingData, m_ValidationData, m_ValidationData, numEpochs, batchSize, validationInterval, learningRate, errorTarget );
 }

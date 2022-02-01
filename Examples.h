@@ -5,15 +5,37 @@
 
 using namespace ToyDNN;
 
+struct HyperParameters
+{
+	uint32_t BatchSize;
+	uint32_t ValidationInterval;
+	Scalar LearningRate;
+};
+
 class BaseExample
 {
 public:
 	BaseExample();
 	virtual ~BaseExample() {}
 
+	void StopTraining() { m_NeuralNet.StopTraining(); }
+	void PauseTraining() { 
+		m_IsTrainingPaused = true; 
+		m_NeuralNet.StopTraining();
+
+		//Wait until it really stops
+		while( m_NeuralNet.IsTraining() )
+		{
+			Sleep( 20 );
+		}
+	}
+
+	void ResumeTraining() { m_IsTrainingPaused = false; }
+
 	void SetHwnd( HWND _hWnd ) { m_hWnd = _hWnd; }
 
-	virtual void Tick( CDC& _dc ) = 0;
+	virtual void TrainingThread( const HyperParameters& _params ) = 0;
+	virtual void Draw( CDC& _dc ) = 0;
 
 	virtual void OnLMouseButtonDown( const POINT& p ) { m_LMouseButtonDown = true; SetCapture( m_hWnd ); }
 	virtual void OnLMouseButtonUp( const POINT& p ) { m_LMouseButtonDown = false; ReleaseCapture(); }
@@ -27,8 +49,9 @@ protected:
 	void PlotLearningCurve( CDC& _dc, const CRect& _r ) const;
 
 protected:
-	HWND m_hWnd;
-	NeuralNetwork net;
+	HWND m_hWnd = 0;
+	NeuralNetwork m_NeuralNet;
+	bool m_IsTrainingPaused = false;
 
 	CPen m_hBlackPen, m_hRedPen;
 
@@ -41,7 +64,7 @@ class Example1 : public BaseExample
 {
 public:
 	Example1();
-	virtual void Tick( CDC& _dc ) override;
+	virtual void Draw( CDC& _dc ) override;
 
 protected:
 	std::vector< Tensor > m_Input;
@@ -53,7 +76,8 @@ class Example2 : public BaseExample
 {
 public:
 	Example2();
-	virtual void Tick( CDC& _dc ) override;
+	virtual void TrainingThread( const HyperParameters& _params );
+	virtual void Draw( CDC& _dc ) override;
 
 protected:
 	std::vector< Tensor > m_Input;
@@ -69,7 +93,7 @@ class Example3 : public BaseExample
 {
 public:
 	Example3();
-	virtual void Tick( CDC& _dc ) override;
+	virtual void Draw( CDC& _dc ) override;
 
 	virtual void OnLMouseButtonDown( const POINT& p ) override;
 	virtual void OnRMouseButtonDown( const POINT& p ) override;
@@ -110,7 +134,7 @@ class Example4 : public BaseExample
 {
 public:
 	Example4();
-	virtual void Tick( CDC& _dc ) override;
+	virtual void Draw( CDC& _dc ) override;
 
 private:
 	std::vector< Tensor > m_TrainingData;

@@ -22,6 +22,8 @@ public:
 	virtual BOOL OnCmdMsg(UINT nID, int nCode, void* pExtra, AFX_CMDHANDLERINFO* pHandlerInfo);
 	virtual BOOL LoadFrame(UINT nIDResource, DWORD dwDefaultStyle = WS_OVERLAPPEDWINDOW | FWS_ADDTOTITLE, CWnd* pParentWnd = nullptr, CCreateContext* pContext = nullptr);
 
+	CChildView& GetChildView() { return m_wndView; }
+
 // Implementation
 public:
 	virtual ~CMainFrame();
@@ -35,7 +37,7 @@ protected:  // control bar embedded members
 	CMFCToolBar       m_wndToolBar;
 	CMFCToolBarImages m_UserImages;
 	CControlPane      m_wndDlgBar;
-	CChildView    m_wndView;
+	CChildView	      m_wndView;
 
 // Generated message map functions
 protected:

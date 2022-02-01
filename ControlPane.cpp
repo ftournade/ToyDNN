@@ -1,6 +1,17 @@
 #include "pch.h"
 #include "ControlPane.h"
-#include "resource.h"
+#include "ToyDNN.h"
+#include "MainFrm.h"
+#include <thread>
+
+void TrainingThread( HyperParameters _params )
+{
+	Log( "Training started" );
+
+	theApp.m_pExample->TrainingThread( _params );
+
+	Log( "Training stopped" );
+}
 
 IMPLEMENT_DYNAMIC( CControlPane, CPaneDialog )
 
@@ -9,6 +20,11 @@ BEGIN_MESSAGE_MAP( CControlPane, CPaneDialog )
 	ON_CBN_SELCHANGE( IDC_COMBO_SELECT_EXAMPLE, OnExampleChanged )
 	ON_BN_CLICKED( IDC_BUTTON_TRAIN, OnStartStopTraining )
 	ON_BN_CLICKED( IDC_BUTTON_RESET_TRAINING, OnResetTraining )
+	ON_WM_TIMER()
+
+	//workaround MFC bug https://social.msdn.microsoft.com/Forums/vstudio/en-US/2fd5c2a8-9e20-4d01-b02f-6be3c2f13220/button-is-disabled-by-using-cpanedialog?forum=vcgeneral
+	ON_UPDATE_COMMAND_UI( IDC_BUTTON_TRAIN, OnUpdateUI )
+	ON_UPDATE_COMMAND_UI( IDC_BUTTON_RESET_TRAINING, OnUpdateUI )
 END_MESSAGE_MAP()
 
 LRESULT CControlPane::HandleInitDialog( WPARAM wParam, LPARAM lParam )
@@ -20,7 +36,19 @@ LRESULT CControlPane::HandleInitDialog( WPARAM wParam, LPARAM lParam )
 	m_SelectExample.AddString( _T( "Example2" ) );
 	m_SelectExample.AddString( _T( "Example3" ) );
 	m_SelectExample.SetCurSel( 0 );
+
 	return TRUE;
+}
+
+void CControlPane::OnUpdateUI( CCmdUI* pCmdUI )
+{
+	pCmdUI->Enable();
+}
+
+void CControlPane::OnTimer( UINT_PTR _timer )
+{
+	assert( _timer == m_DisplayRefreshTimer );
+	((CMainFrame*)theApp.GetMainWnd())->GetChildView().Invalidate( FALSE );
 }
 
 
@@ -61,11 +89,21 @@ void CControlPane::OnStartStopTraining()
 	if( m_IsTraining )
 	{
 		UpdateData( TRUE );
+		HyperParameters params;
+		params.BatchSize = m_BatchSize;
+		params.LearningRate = m_LearningRate;
+		params.ValidationInterval = m_ValidationInterval;
 
+		std::thread trainingThread( TrainingThread, params );
+		trainingThread.detach();
+
+		m_DisplayRefreshTimer = SetTimer( IDT_REFRESH_DISPLAY, 1000, nullptr );
 	}
 	else
 	{
-
+		theApp.m_pExample->StopTraining();
+	
+		KillTimer( m_DisplayRefreshTimer );
 	}
 }
 

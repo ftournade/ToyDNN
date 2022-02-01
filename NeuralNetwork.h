@@ -24,6 +24,10 @@ namespace ToyDNN
 					 const std::vector<Tensor>& _validationSetExpectedOutput,
 					 uint32_t _numEpochs, uint32_t _batchSize, uint32_t _validationInterval /*evaluate vaildationSet every N batch*/,
 					 Scalar _learningRate, Scalar _errorTarget = 0.0001f );
+		
+		void StopTraining() { m_StopTraining = true; }
+		bool IsTraining() { return m_IsTraining; }
+
 		void Evaluate( const Tensor& _in, Tensor& _out ) const;
 
 		static void ComputeError( const Tensor& _out, const Tensor& _expectedOutput, Tensor& _error );
@@ -68,6 +72,8 @@ namespace ToyDNN
 		History m_History;
 
 		bool m_EnableClassificationAccuracyLog = false;
+		bool m_StopTraining = false;
+		bool m_IsTraining = false;
 	};
 
 	uint32_t GetMostProbableClassIndex( const Tensor& _tensor );

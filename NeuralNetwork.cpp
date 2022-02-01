@@ -86,14 +86,17 @@ namespace ToyDNN
 		assert( _validationSet.size() == _validationSetExpectedOutput.size() );
 		assert( _batchSize <= _trainingSet.size() );
 
+		m_IsTraining = true;
+		m_StopTraining = false;
+
 		uint32_t numTrainingSamples = (uint32_t)_trainingSet.size();
 		uint32_t numValidationSamples = (uint32_t)_trainingSet.size();
 
 		Tensor out;
 
-		for( uint32_t epoch = 0; epoch < _numEpochs ; ++epoch )
+		for( uint32_t epoch = 0; (epoch < _numEpochs) && !m_StopTraining ; ++epoch )
 		{
-			for( uint32_t batch = 0 ; batch < numTrainingSamples / _batchSize ; ++batch )
+			for( uint32_t batch = 0 ; (batch < numTrainingSamples / _batchSize) && !m_StopTraining ; ++batch )
 			{
 				ClearWeightDeltas();
 
@@ -135,16 +138,20 @@ namespace ToyDNN
 					m_History.ValidationSetErrorXAxis.push_back( fEpoch );
 					m_History.ValidationSetError.push_back( validationSetError );
 
-					Log( "Validation set error: %f\n", validationSetError );
+					//Log( "Validation set error: %f\n", validationSetError );
 
 					if( validationSetError <= _errorTarget )
+					{
+						m_IsTraining = false;
 						return;
+					}
 				}
 			}
 
 			m_History.NumEpochCompleted++;
 		}
 
+		m_IsTraining = false;
 	}
 
 	void NeuralNetwork::Evaluate( const Tensor& _in, Tensor& _out ) const

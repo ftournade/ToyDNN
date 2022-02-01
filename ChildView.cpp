@@ -52,7 +52,10 @@ BOOL CChildView::PreCreateWindow(CREATESTRUCT& cs)
 void CChildView::OnPaint() 
 {
 	CPaintDC dc(this); // device context for painting
-	
+
+	theApp.m_pExample->PauseTraining();
+
+
 	CRect r;
 	GetClientRect( &r );
 
@@ -68,18 +71,18 @@ void CChildView::OnPaint()
 
 	CDC* pMemDC = CDC::FromHandle( m_backBuffer.GetBackBufferDC() );
 
-	theApp.m_Example.Tick( *pMemDC );
+	theApp.m_pExample->Draw( *pMemDC );
 
 	m_backBuffer.Blit( dc.GetSafeHdc() );
 
-	Invalidate( FALSE );
+	theApp.m_pExample->ResumeTraining();
 }
 
 
 
 void CChildView::OnLButtonDown( UINT nFlags, CPoint point )
 {
-	theApp.m_Example.OnLMouseButtonDown( point );
+	theApp.m_pExample->OnLMouseButtonDown( point );
 
 	CWnd::OnLButtonDown( nFlags, point );
 }
@@ -87,7 +90,7 @@ void CChildView::OnLButtonDown( UINT nFlags, CPoint point )
 
 void CChildView::OnLButtonUp( UINT nFlags, CPoint point )
 {
-	theApp.m_Example.OnLMouseButtonUp( point );
+	theApp.m_pExample->OnLMouseButtonUp( point );
 
 	CWnd::OnLButtonUp( nFlags, point );
 }
@@ -95,7 +98,7 @@ void CChildView::OnLButtonUp( UINT nFlags, CPoint point )
 
 void CChildView::OnRButtonDown( UINT nFlags, CPoint point )
 {
-	theApp.m_Example.OnRMouseButtonDown( point );
+	theApp.m_pExample->OnRMouseButtonDown( point );
 
 	CWnd::OnRButtonDown( nFlags, point );
 }
@@ -103,7 +106,7 @@ void CChildView::OnRButtonDown( UINT nFlags, CPoint point )
 
 void CChildView::OnRButtonUp( UINT nFlags, CPoint point )
 {
-	theApp.m_Example.OnRMouseButtonUp( point );
+	theApp.m_pExample->OnRMouseButtonUp( point );
 
 	CWnd::OnRButtonUp( nFlags, point );
 }
@@ -111,7 +114,7 @@ void CChildView::OnRButtonUp( UINT nFlags, CPoint point )
 
 void CChildView::OnMouseMove( UINT nFlags, CPoint point )
 {
-	theApp.m_Example.OnMouseMove( point );
+	theApp.m_pExample->OnMouseMove( point );
 
 	CWnd::OnMouseMove( nFlags, point );
 }
