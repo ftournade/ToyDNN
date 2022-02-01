@@ -115,7 +115,7 @@ void CControlPane::OnStartStopTraining()
 		std::thread trainingThread( TrainingThread, params );
 		trainingThread.detach();
 
-		m_DisplayRefreshTimer = SetTimer( IDT_REFRESH_DISPLAY, 1000, nullptr );
+		m_DisplayRefreshTimer = SetTimer( IDT_REFRESH_DISPLAY, 2000, nullptr );
 	}
 	else
 	{

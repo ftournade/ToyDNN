@@ -248,7 +248,7 @@ void Example3::Draw( CDC& _dc )
     
     DrawUserDrawnDigit( _dc );
     
-    //  DrawConvolutionLayerFeatures( _hdc, 3 ); //SLOW
+    DrawConvolutionLayerFeatures( _dc, 3 ); //SLOW
 
     PlotLearningCurve( _dc, CRect( 10, 400, 800, 800 ) );
 }
@@ -312,14 +312,10 @@ void Example3::DrawConvolutionLayerFeatures( CDC& _dc, uint32_t _zoom )
 
                 DWORD col = RGB( (int)v, (int)v, (int)v );
 
-                for( uint32_t dy = 0 ; dy < _zoom ; ++dy )
-                {
-                    for( uint32_t dx = 0 ; dx < _zoom ; ++dx )
-                    {
-                        _dc.SetPixel( x * _zoom + dx + f * (_zoom * s + 3), y * _zoom + dy, col );
-                    }
-                }
+                CRect r( x * _zoom, y * _zoom, (x + 1) * _zoom, (y + 1) * _zoom );
+                r.OffsetRect( f * (_zoom * s + 3), 0 );
 
+                _dc.FillSolidRect( r, col );
             }
         }
     }

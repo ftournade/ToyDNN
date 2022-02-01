@@ -71,6 +71,7 @@ void CChildView::OnPaint()
 
 	CDC* pMemDC = CDC::FromHandle( m_backBuffer.GetBackBufferDC() );
 
+	pMemDC->FillSolidRect( &r, RGB( 200, 200, 200 ) );
 	theApp.m_pExample->Draw( *pMemDC );
 
 	m_backBuffer.Blit( dc.GetSafeHdc() );
