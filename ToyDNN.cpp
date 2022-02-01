@@ -46,7 +46,7 @@ CToyDNNApp theApp;
 
 BOOL CToyDNNApp::InitInstance()
 {
-	m_pExample = std::make_unique<Example2>();
+	m_pExample = std::make_unique<Example1>();
 
 
 	// InitCommonControlsEx() is required on Windows XP if an application

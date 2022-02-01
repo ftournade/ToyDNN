@@ -82,7 +82,8 @@ void CChildView::OnPaint()
 
 void CChildView::OnLButtonDown( UINT nFlags, CPoint point )
 {
-	theApp.m_pExample->OnLMouseButtonDown( point );
+	if( theApp.m_pExample->OnLMouseButtonDown( point ) )
+		Invalidate( FALSE );
 
 	CWnd::OnLButtonDown( nFlags, point );
 }
@@ -90,7 +91,8 @@ void CChildView::OnLButtonDown( UINT nFlags, CPoint point )
 
 void CChildView::OnLButtonUp( UINT nFlags, CPoint point )
 {
-	theApp.m_pExample->OnLMouseButtonUp( point );
+	if( theApp.m_pExample->OnLMouseButtonUp( point ) )
+		Invalidate( FALSE );
 
 	CWnd::OnLButtonUp( nFlags, point );
 }
@@ -98,7 +100,8 @@ void CChildView::OnLButtonUp( UINT nFlags, CPoint point )
 
 void CChildView::OnRButtonDown( UINT nFlags, CPoint point )
 {
-	theApp.m_pExample->OnRMouseButtonDown( point );
+	if( theApp.m_pExample->OnRMouseButtonDown( point ) )
+		Invalidate( FALSE );
 
 	CWnd::OnRButtonDown( nFlags, point );
 }
@@ -106,7 +109,8 @@ void CChildView::OnRButtonDown( UINT nFlags, CPoint point )
 
 void CChildView::OnRButtonUp( UINT nFlags, CPoint point )
 {
-	theApp.m_pExample->OnRMouseButtonUp( point );
+	if( theApp.m_pExample->OnRMouseButtonUp( point ) )
+		Invalidate( FALSE );
 
 	CWnd::OnRButtonUp( nFlags, point );
 }
@@ -114,7 +118,8 @@ void CChildView::OnRButtonUp( UINT nFlags, CPoint point )
 
 void CChildView::OnMouseMove( UINT nFlags, CPoint point )
 {
-	theApp.m_pExample->OnMouseMove( point );
+	if( theApp.m_pExample->OnMouseMove( point ) )
+		Invalidate( FALSE );
 
 	CWnd::OnMouseMove( nFlags, point );
 }

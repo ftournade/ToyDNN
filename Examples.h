@@ -16,32 +16,25 @@ class BaseExample
 {
 public:
 	BaseExample();
-	virtual ~BaseExample() {}
+	virtual ~BaseExample();
 
-	void StopTraining() { m_NeuralNet.StopTraining(); }
-	void PauseTraining() { 
-		m_IsTrainingPaused = true; 
-		m_NeuralNet.StopTraining();
-
-		//Wait until it really stops
-		while( m_NeuralNet.IsTraining() )
-		{
-			Sleep( 20 );
-		}
-	}
-
-	void ResumeTraining() { m_IsTrainingPaused = false; }
+	void StopTraining();
+	void PauseTraining();
+	void ResumeTraining();
 
 	void SetHwnd( HWND _hWnd ) { m_hWnd = _hWnd; }
 
-	virtual void TrainingThread( const HyperParameters& _params ) = 0;
+	virtual void Train( const HyperParameters& _params ) = 0;	
+	void TrainingThread( const HyperParameters& _params );
+	
 	virtual void Draw( CDC& _dc ) = 0;
 
-	virtual void OnLMouseButtonDown( const POINT& p ) { m_LMouseButtonDown = true; SetCapture( m_hWnd ); }
-	virtual void OnLMouseButtonUp( const POINT& p ) { m_LMouseButtonDown = false; ReleaseCapture(); }
-	virtual void OnRMouseButtonDown( const POINT& p ) { m_RMouseButtonDown = true; SetCapture( m_hWnd ); }
-	virtual void OnRMouseButtonUp( const POINT& p ) { m_RMouseButtonDown = false; ReleaseCapture(); }
-	virtual void OnMouseMove( const POINT& p ) {}
+	//Return true if you want the view redrawn
+	virtual bool OnLMouseButtonDown( const CPoint& p ) { m_LMouseButtonDown = true; SetCapture( m_hWnd ); return false; }
+	virtual bool OnLMouseButtonUp( const CPoint& p ) { m_LMouseButtonDown = false; ReleaseCapture(); return false; }
+	virtual bool OnRMouseButtonDown( const CPoint& p ) { m_RMouseButtonDown = true; SetCapture( m_hWnd ); return false; }
+	virtual bool OnRMouseButtonUp( const CPoint& p ) { m_RMouseButtonDown = false; ReleaseCapture(); return false; }
+	virtual bool OnMouseMove( const CPoint& p ) { return false; }
 
 protected:
 	inline bool IsLMouseButtonDown() const { return m_LMouseButtonDown; }
@@ -53,8 +46,6 @@ protected:
 	NeuralNetwork m_NeuralNet;
 	bool m_IsTrainingPaused = false;
 
-	CPen m_hBlackPen, m_hRedPen;
-
 	bool m_LMouseButtonDown = false;
 	bool m_RMouseButtonDown = false;
 };
@@ -64,6 +55,9 @@ class Example1 : public BaseExample
 {
 public:
 	Example1();
+	virtual ~Example1() {}
+
+	virtual void Train( const HyperParameters& _params ) override;
 	virtual void Draw( CDC& _dc ) override;
 
 protected:
@@ -76,7 +70,9 @@ class Example2 : public BaseExample
 {
 public:
 	Example2();
-	virtual void TrainingThread( const HyperParameters& _params );
+	virtual ~Example2() {}
+
+	virtual void Train( const HyperParameters& _params ) override;
 	virtual void Draw( CDC& _dc ) override;
 
 protected:
@@ -93,11 +89,14 @@ class Example3 : public BaseExample
 {
 public:
 	Example3();
+	virtual ~Example3() {}
+
+	virtual void Train( const HyperParameters& _params ) override;
 	virtual void Draw( CDC& _dc ) override;
 
-	virtual void OnLMouseButtonDown( const POINT& p ) override;
-	virtual void OnRMouseButtonDown( const POINT& p ) override;
-	virtual void OnMouseMove( const POINT& p ) override;
+	virtual bool OnLMouseButtonDown( const CPoint& p ) override;
+	virtual bool OnRMouseButtonDown( const CPoint& p ) override;
+	virtual bool OnMouseMove( const CPoint& p ) override;
 
 private:
 	void DrawConvolutionLayerFeatures( CDC& _dc, uint32_t _zoom=1 );
@@ -124,7 +123,7 @@ private:
 	std::vector< Tensor > m_DebugData;
 	std::vector< Tensor > m_DebugMetaData;
 
-	const RECT m_UserDrawDigitRect = { 900, 400, 1300, 800 };
+	const CRect m_UserDrawDigitRect = { 900, 400, 1300, 800 };
 	Tensor m_UserDrawnDigit;
 	uint32_t m_RecognizedDigit = 0;
 };
@@ -134,6 +133,9 @@ class Example4 : public BaseExample
 {
 public:
 	Example4();
+	virtual ~Example4() {}
+
+	virtual void Train( const HyperParameters& _params ) override;
 	virtual void Draw( CDC& _dc ) override;
 
 private:

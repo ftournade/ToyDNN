@@ -35,6 +35,7 @@ LRESULT CControlPane::HandleInitDialog( WPARAM wParam, LPARAM lParam )
 	m_SelectExample.AddString( _T( "Example1" ) );
 	m_SelectExample.AddString( _T( "Example2" ) );
 	m_SelectExample.AddString( _T( "Example3" ) );
+	m_SelectExample.AddString( _T( "Example4" ) );
 	m_SelectExample.SetCurSel( 0 );
 
 	return TRUE;
@@ -69,7 +70,24 @@ void CControlPane::OnExampleChanged()
 {
 	int sel = m_SelectExample.GetCurSel();
 
-	sel++;
+	//Do something better (example registration system for example)
+	switch( sel )
+	{
+		case 0:
+			theApp.m_pExample = std::make_unique<Example1>();
+			break;
+		case 1:
+			theApp.m_pExample = std::make_unique<Example2>();
+			break;
+		case 2:
+			theApp.m_pExample = std::make_unique<Example3>();
+			break;
+		case 3:
+			theApp.m_pExample = std::make_unique<Example4>();
+			break;
+	}
+
+	((CMainFrame*)theApp.GetMainWnd())->GetChildView().Invalidate( FALSE );
 }
 
 void CControlPane::OnStartStopTraining()
@@ -110,5 +128,5 @@ void CControlPane::OnStartStopTraining()
 
 void CControlPane::OnResetTraining()
 {
-
+	::MessageBox( NULL, _T( "Not yet implemented" ), _T( "Error" ), MB_OK );
 }
