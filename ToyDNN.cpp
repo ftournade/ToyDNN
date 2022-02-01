@@ -110,7 +110,8 @@ BOOL CToyDNNApp::InitInstance()
 
 int CToyDNNApp::ExitInstance()
 {
-	//TODO: handle additional resources you may have added
+	m_pExample->StopTraining( true );
+
 	return CWinAppEx::ExitInstance();
 }
 

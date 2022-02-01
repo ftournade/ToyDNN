@@ -20,11 +20,13 @@ BEGIN_MESSAGE_MAP( CControlPane, CPaneDialog )
 	ON_CBN_SELCHANGE( IDC_COMBO_SELECT_EXAMPLE, OnExampleChanged )
 	ON_BN_CLICKED( IDC_BUTTON_TRAIN, OnStartStopTraining )
 	ON_BN_CLICKED( IDC_BUTTON_RESET_TRAINING, OnResetTraining )
+	ON_BN_CLICKED( IDC_BUTTON_GRADIENT_CHECK, OnGradientCheck )
 	ON_WM_TIMER()
 
 	//workaround MFC bug https://social.msdn.microsoft.com/Forums/vstudio/en-US/2fd5c2a8-9e20-4d01-b02f-6be3c2f13220/button-is-disabled-by-using-cpanedialog?forum=vcgeneral
 	ON_UPDATE_COMMAND_UI( IDC_BUTTON_TRAIN, OnUpdateUI )
 	ON_UPDATE_COMMAND_UI( IDC_BUTTON_RESET_TRAINING, OnUpdateUI )
+	ON_UPDATE_COMMAND_UI( IDC_BUTTON_GRADIENT_CHECK, OnUpdateUI )
 END_MESSAGE_MAP()
 
 LRESULT CControlPane::HandleInitDialog( WPARAM wParam, LPARAM lParam )
@@ -43,7 +45,13 @@ LRESULT CControlPane::HandleInitDialog( WPARAM wParam, LPARAM lParam )
 
 void CControlPane::OnUpdateUI( CCmdUI* pCmdUI )
 {
-	pCmdUI->Enable();
+	//Workaround MFC bug
+
+	if( pCmdUI->m_nID == IDC_BUTTON_TRAIN )
+		pCmdUI->Enable(TRUE);
+	else
+		pCmdUI->Enable( !m_IsTraining );
+	
 }
 
 void CControlPane::OnTimer( UINT_PTR _timer )
@@ -129,4 +137,9 @@ void CControlPane::OnStartStopTraining()
 void CControlPane::OnResetTraining()
 {
 	::MessageBox( NULL, _T( "Not yet implemented" ), _T( "Error" ), MB_OK );
+}
+
+void CControlPane::OnGradientCheck()
+{
+	theApp.m_pExample->GradientCheck();
 }

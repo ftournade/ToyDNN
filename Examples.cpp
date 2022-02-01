@@ -13,21 +13,24 @@ BaseExample::~BaseExample()
 {
 }
 
-void BaseExample::StopTraining()
+void BaseExample::StopTraining( bool _waitForTrainingToStop )
 {
     m_NeuralNet.StopTraining();
+
+    if( _waitForTrainingToStop )
+    {
+        while( m_NeuralNet.IsTraining() )
+        {
+            Sleep( 20 );
+        }
+    }
 }
 
 void BaseExample::PauseTraining()
 {
     m_IsTrainingPaused = true;
-    m_NeuralNet.StopTraining();
 
-    //Wait until it really stops
-    while( m_NeuralNet.IsTraining() )
-    {
-        Sleep( 20 );
-    }
+    StopTraining( true );
 }
 
 void BaseExample::ResumeTraining()
@@ -124,7 +127,7 @@ Example2::Example2()
     for( uint32_t i = 0 ; i < numSamples ; ++i )
     {
         float x = rangeMin + step * (float)i;
-       // float y = std::sin( x * std::abs( std::cos( x ) ) ); //The curve we want to fit
+       // float y = std::sin( 0.2f * x * std::abs( std::cos( x ) ) ); //The curve we want to fit
         float y = std::sin( x );
 
         m_Input[i].push_back( x / 20.0f );
@@ -134,6 +137,11 @@ Example2::Example2()
         m_GroundTruthYAxis[i] = y;
     }
 
+}
+
+void Example2::GradientCheck()
+{
+    m_NeuralNet.GradientCheck( m_Input, m_ExpectedOutput, 50 );
 }
 
 void Example2::Train( const HyperParameters& _params )
@@ -222,6 +230,11 @@ Example3::Example3()
         m_DebugMetaData[i] = m_ValidationMetaData[i];
     }
 #endif
+}
+
+void Example3::GradientCheck()
+{
+    m_NeuralNet.GradientCheck( m_ValidationData, m_ValidationMetaData, 500 );
 }
 
 void Example3::Train( const HyperParameters& _params )

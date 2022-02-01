@@ -18,7 +18,7 @@ public:
 	BaseExample();
 	virtual ~BaseExample();
 
-	void StopTraining();
+	void StopTraining( bool _waitForTrainingToStop = false );
 	void PauseTraining();
 	void ResumeTraining();
 
@@ -28,6 +28,8 @@ public:
 	void TrainingThread( const HyperParameters& _params );
 	
 	virtual void Draw( CDC& _dc ) = 0;
+
+	virtual void GradientCheck() {}
 
 	//Return true if you want the view redrawn
 	virtual bool OnLMouseButtonDown( const CPoint& p ) { m_LMouseButtonDown = true; SetCapture( m_hWnd ); return false; }
@@ -73,6 +75,7 @@ public:
 	virtual ~Example2() {}
 
 	virtual void Train( const HyperParameters& _params ) override;
+	virtual void GradientCheck() override;
 	virtual void Draw( CDC& _dc ) override;
 
 protected:
@@ -92,6 +95,7 @@ public:
 	virtual ~Example3() {}
 
 	virtual void Train( const HyperParameters& _params ) override;
+	virtual void GradientCheck() override;
 	virtual void Draw( CDC& _dc ) override;
 
 	virtual bool OnLMouseButtonDown( const CPoint& p ) override;
