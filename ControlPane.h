@@ -12,11 +12,14 @@ public:
 protected:
 	DECLARE_MESSAGE_MAP()
 
+	afx_msg LRESULT HandleInitDialog( WPARAM, LPARAM );
+	afx_msg void OnExampleChanged();
 	afx_msg void OnStartStopTraining();
 	afx_msg void OnResetTraining();
 
 	virtual void DoDataExchange( CDataExchange* pDX );
 
+	CComboBox m_SelectExample;
 	float m_LearningRate = 0.001f;
 	UINT m_BatchSize = 32;
 	UINT m_ValidationInterval = 10;
