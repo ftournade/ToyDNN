@@ -86,7 +86,7 @@ namespace ToyDNN
 						
 						uint32_t inIdx = m_InputShape.Index( xin, yin, z );
 
-						_inputGradients[inIdx] = 1.0f;
+						_inputGradients[inIdx] = _outputGradients[outIdx];
 					}
 				}
 			}

@@ -84,8 +84,7 @@ namespace ToyDNN
 	{
 		assert( _trainingSet.size() == _trainingSetExpectedOutput.size() );
 		assert( _validationSet.size() == _validationSetExpectedOutput.size() );
-		assert( _batchSize <= _trainingSet.size() );
-
+		
 		m_IsTraining = true;
 		m_StopTraining = false;
 
@@ -96,7 +95,7 @@ namespace ToyDNN
 
 		for( uint32_t epoch = 0; (epoch < _numEpochs) && !m_StopTraining ; ++epoch )
 		{
-			for( uint32_t batch = 0 ; (batch < numTrainingSamples / _batchSize) && !m_StopTraining ; ++batch )
+			for( uint32_t batch = 0 ; (batch <= numTrainingSamples / _batchSize) && !m_StopTraining ; ++batch )
 			{
 				ClearWeightDeltas();
 
@@ -121,7 +120,7 @@ namespace ToyDNN
 				trainingError /= batchSize;
 				//Log( "epoch %d batch %d (%d samples) took %.1fs, error: %f\n", epoch, batch, batchSize, elapsedTime, error );
 
-				Scalar fEpoch = Scalar( m_History.NumEpochCompleted ) + Scalar(batch + 1) / Scalar(numTrainingSamples / _batchSize);
+				Scalar fEpoch = Scalar( m_History.NumEpochCompleted ) + Scalar(batch + 1) / Scalar(1 + (numTrainingSamples / _batchSize));
 
 				m_History.TrainingSetErrorXAxis.push_back( fEpoch );
 				m_History.TrainingSetError.push_back( trainingError );

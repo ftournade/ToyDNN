@@ -115,7 +115,7 @@ private:
 	const char* m_NeuralNetFilename = "D:/tmp/example3_mnist.dnn";
 	#endif
 	static const uint32_t m_NumFeatureMaps = 8;
-	static const uint32_t m_KernelSize = 3;
+	static const uint32_t m_KernelSize = 5;
 	static const uint32_t m_Stride = 1;
 
 	bool m_IsTrained = false;

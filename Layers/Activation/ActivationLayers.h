@@ -45,7 +45,7 @@ namespace ToyDNN
 			#pragma omp parallel for
 			for( int i = 0 ; i < (int)n ; ++i )
 			{
-				Scalar gradient = _layerInputs[i] > Scalar(0.0) ? Scalar(1.0) : Scalar(0.0);
+				Scalar gradient = _layerInputs[i] >= Scalar(0.0) ? Scalar(1.0) : Scalar(0.0);
 
 				_inputGradients[i] = _outputGradients[i] * gradient;
 			}

@@ -90,14 +90,7 @@ void Example1::Train( const HyperParameters& _params )
 
 void Example1::Draw( CDC& _dc )
 {
-    //Hyper parameters
-    const int numEpochs = 100;
-    const int batchSize = 1;
-    const int validationInterval = 300;
-    const float learningRate = 0.5;
-    const float errorTarget = 0.01f;
-
-    m_NeuralNet.Train( m_Input, m_ExpectedOutput, m_Input, m_ExpectedOutput, numEpochs, batchSize, validationInterval, learningRate );
+    PlotLearningCurve( _dc, CRect( 10, 900, 800, 1200 ) );
 }
 
 //-----------------------------------------
@@ -128,7 +121,8 @@ Example2::Example2()
     {
         float x = rangeMin + step * (float)i;
        // float y = std::sin( 0.2f * x * std::abs( std::cos( x ) ) ); //The curve we want to fit
-        float y = std::sin( x );
+       // float y = std::sin( x );
+        float y = x < 0.0f ? 0.0f : x > 1.0f ? 0.5f : 1.0f;
 
         m_Input[i].push_back( x / 20.0f );
         m_ExpectedOutput[i].push_back( y );
@@ -196,10 +190,10 @@ Example3::Example3()
     else
     {
         m_NeuralNet.AddLayer( new Convolution2D( m_NumFeatureMaps, m_KernelSize, m_Stride ) );
-        m_NeuralNet.AddLayer( new Relu() );
+        m_NeuralNet.AddLayer( new LeakyRelu() );
         m_NeuralNet.AddLayer( new MaxPooling( 2, 2 ) );
         m_NeuralNet.AddLayer( new FullyConnected( 100 ) );
-        m_NeuralNet.AddLayer( new Relu() );
+        m_NeuralNet.AddLayer( new LeakyRelu() );
         m_NeuralNet.AddLayer( new FullyConnected( 10 ) );
         m_NeuralNet.AddLayer( new Sigmoid() );
         m_NeuralNet.Compile( TensorShape( m_ImageRes, m_ImageRes, numChannels ) );
@@ -314,11 +308,34 @@ void Example3::DrawConvolutionLayerFeatures( CDC& _dc, uint32_t _zoom )
 
     for( uint32_t f = 0 ; f < m_NumFeatureMaps ; ++f )
     {
+    #if 1
+        float vmin = FLT_MAX;
+        float vmax = -FLT_MAX;
+
+        for( uint32_t y = 0 ; y < s ; ++y )
+        {
+            for( uint32_t x = 0 ; x < s ; ++x )
+            {
+                float v = (float)convOutput[f * s * s + y * s + x];
+                
+                vmin = std::min( vmin, v );
+                vmax = std::max( vmax, v );
+            }
+        }
+                 
+        float scale = 1.0f / (vmax - vmin);
+    #else
+        float scale = 1.0f;
+        float vmin = 0.0f;
+    #endif
+
         for( uint32_t y = 0 ; y < s ; ++y )
         {
             for( uint32_t x = 0 ; x < s ; ++x )
             {
                 float v = (float)convOutput[ f * s * s + y * s + x ];
+                v = (v - vmin) * scale;
+
                 v = v * 255.0f;
                 v = std::min( v, 255.0f );
                 v = std::max( v, 0.0f );
