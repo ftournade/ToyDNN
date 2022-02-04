@@ -476,7 +476,7 @@ namespace ToyDNN
 			//	assert( false );
 				++badGradients;
 				Log( "Bad gradient (%f != %f, error=%.3f%%) found in layer %d. Probably a back propagation bug !\n", 
-					 backPropGradient, groundThruthGradient, 100.0f * gradientError, randomLayer );
+					 (float)backPropGradient, (float)groundThruthGradient, 100.0f * (float)gradientError, randomLayer );
 			}
 
 			//restore the parameter

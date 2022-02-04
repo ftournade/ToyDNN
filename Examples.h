@@ -43,6 +43,7 @@ protected:
 
 	void PlotLearningCurve( CDC& _dc, const CRect& _r ) const;
 	void DrawConvolutionLayerFeatures( CDC& _dc, uint32_t _layerIndex, int _x, int _y, uint32_t _zoom=1 );
+	void DrawImage( CDC& _dc, const Tensor& _tensor, const TensorShape& _shape, int _x, int _y, uint32_t _zoom=1 );
 
 protected:
 	HWND m_hWnd = 0;
@@ -148,4 +149,6 @@ private:
 	std::vector< CelebAMetaData > m_TrainingMetaData;
 	std::vector< Tensor > m_ValidationData;
 	std::vector< CelebAMetaData > m_ValidationMetaData;
+
+	TensorShape m_InputShape;
 };

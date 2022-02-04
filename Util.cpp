@@ -5,7 +5,8 @@
 #include <stdarg.h>
 
 #include <windows.h>
-
+#undef min
+#undef max
 
 namespace ToyDNN
 {
@@ -21,4 +22,15 @@ namespace ToyDNN
 
 		OutputDebugStringA( buffer );
 	}
+
+	void Color::Saturate()
+	{
+		R = std::min( R, 1.0f );
+		R = std::max( R, 0.0f );
+		G = std::min( G, 1.0f );
+		G = std::max( G, 0.0f );
+		B = std::min( B, 1.0f );
+		B = std::max( B, 0.0f );
+	}
+
 }

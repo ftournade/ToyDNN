@@ -87,10 +87,13 @@ void BaseExample::PlotLearningCurve( CDC& _dc, const CRect& _r ) const
 
 void BaseExample::DrawConvolutionLayerFeatures( CDC& _dc, uint32_t _layerIndex, int _x, int _y, uint32_t _zoom )
 {
-    assert( m_NeuralNet.DbgGetLayer( _layerIndex )->GetType() == LayerType::Convolution2D );
+    //assert( m_NeuralNet.DbgGetLayer( _layerIndex )->GetType() == LayerType::Convolution2D );
 
     const TensorShape& convOutputShape = m_NeuralNet.DbgGetLayer( _layerIndex )->GetOutputShape();
     const Tensor& convOutput = m_NeuralNet.DbgGetLayer( _layerIndex )->GetOutput();
+
+    if( convOutput.empty() )
+        return;
 
     uint32_t sx = convOutputShape.m_SX;
     uint32_t sy = convOutputShape.m_SY;
@@ -142,6 +145,50 @@ void BaseExample::DrawConvolutionLayerFeatures( CDC& _dc, uint32_t _layerIndex, 
         }
     }
 
+}
+
+void BaseExample::DrawImage( CDC& _dc, const Tensor& _tensor, const TensorShape& _shape, int _x, int _y, uint32_t _zoom )
+{
+    if( _tensor.empty() )
+        return;
+
+    assert( _tensor.size() == _shape.Size() );
+
+    uint32_t sx = _shape.m_SX;
+    uint32_t sy = _shape.m_SY;
+
+    for( uint32_t y = 0 ; y < sy ; ++y )
+    {
+        for( uint32_t x = 0 ; x < sx ; ++x )
+        {
+            CRect r( _x + x * _zoom, _y + y * _zoom,
+                     _x + (x+1) * _zoom, _y + (y+1) * _zoom );
+
+            Color col;
+
+            if( _shape.m_SZ == 1 )
+            {
+                col.R = (float)_tensor[y * sx + x];
+                col.G = col.R;
+                col.B = col.R;
+            }
+            if( _shape.m_SZ == 3 )
+            {
+                col.R = (float)_tensor[0 * sx * sy + y * sx + x];
+                col.G = (float)_tensor[1 * sx * sy + y * sx + x];
+                col.B = (float)_tensor[2 * sx * sy + y * sx + x];
+            }
+            else
+            {
+                assert( false );
+            }
+
+            col.Saturate();
+
+            _dc.FillSolidRect( r, col );
+        }
+
+    }
 }
 
 
@@ -200,8 +247,8 @@ Example2::Example2()
     {
         float x = rangeMin + step * (float)i;
        // float y = std::sin( 0.2f * x * std::abs( std::cos( x ) ) ); //The curve we want to fit
-       // float y = std::sin( x );
-        float y = x < 0.0f ? 0.0f : x > 1.0f ? 0.5f : 1.0f;
+        float y = std::sin( x );
+       // float y = x < 0.0f ? 0.0f : x > 1.0f ? 0.5f : 1.0f;
 
         m_Input[i].push_back( x / 20.0f );
         m_ExpectedOutput[i].push_back( y );
@@ -269,13 +316,13 @@ Example3::Example3()
     else
     {
         m_NeuralNet.AddLayer( new Convolution2D( m_NumFeatureMaps, m_KernelSize, m_Stride ) );
-        m_NeuralNet.AddLayer( new Relu() );
+        m_NeuralNet.AddLayer( new LeakyRelu() );
         m_NeuralNet.AddLayer( new MaxPooling( 2, 2 ) );
-        m_NeuralNet.AddLayer( new Convolution2D( m_NumFeatureMaps*2, m_KernelSize, m_Stride ) );
-        m_NeuralNet.AddLayer( new Relu() );
-        m_NeuralNet.AddLayer( new MaxPooling( 2, 2 ) );
+      //  m_NeuralNet.AddLayer( new Convolution2D( m_NumFeatureMaps*2, m_KernelSize, m_Stride ) );
+      //  m_NeuralNet.AddLayer( new LeakyRelu() );
+      //  m_NeuralNet.AddLayer( new MaxPooling( 2, 2 ) );
         m_NeuralNet.AddLayer( new FullyConnected( 200 ) );
-        m_NeuralNet.AddLayer( new Relu() );
+        m_NeuralNet.AddLayer( new LeakyRelu() );
         m_NeuralNet.AddLayer( new FullyConnected( 10 ) );
         m_NeuralNet.AddLayer( new Sigmoid() );
         m_NeuralNet.Compile( TensorShape( m_ImageRes, m_ImageRes, numChannels ) );
@@ -310,7 +357,12 @@ Example3::Example3()
 
 void Example3::GradientCheck()
 {
-    m_NeuralNet.GradientCheck( m_ValidationData, m_ValidationMetaData, 50 );
+    const uint32_t dataSetSize = 20;
+
+    std::vector< Tensor > data( m_ValidationData.begin(), m_ValidationData.begin() + dataSetSize );
+    std::vector< Tensor > metaData( m_ValidationMetaData.begin(), m_ValidationMetaData.begin() + dataSetSize );
+
+    m_NeuralNet.GradientCheck( data, metaData, 50 );
 }
 
 void Example3::Train( const HyperParameters& _params )
@@ -337,8 +389,8 @@ void Example3::Draw( CDC& _dc )
     
     DrawUserDrawnDigit( _dc );
     
-    DrawConvolutionLayerFeatures( _dc, 0, 5, 5, 4 );
-    DrawConvolutionLayerFeatures( _dc, 3, 5, 120, 4 );
+    DrawConvolutionLayerFeatures( _dc, 2, 5, 5, 4 );
+    //DrawConvolutionLayerFeatures( _dc, 5, 5, 120, 4 );
 
     PlotLearningCurve( _dc, CRect( 10, 400, 800, 800 ) );
 
@@ -414,23 +466,26 @@ void Example3::DrawUserDrawnDigit( CDC& _dc )
 
 Example4::Example4()
 {
-    
     srand( 111 );
 
     const bool halfRes = true;
 
-    TensorShape inputShape( 178, 218, 3 );
+    m_InputShape = TensorShape( 178, 218, 3 );
 
     if( halfRes )
-        inputShape = TensorShape( inputShape.m_SX / 2, inputShape.m_SY / 2, 3 );
+        m_InputShape = TensorShape( m_InputShape.m_SX / 2, m_InputShape.m_SY / 2, 3 );
 
-//    m_NeuralNet.AddLayer( new Convolution2D( 16, 3, 2 ) );
-//    m_NeuralNet.AddLayer( new Relu() );
+    m_NeuralNet.AddLayer( new Convolution2D( 16, 3, 2 ) );
+    m_NeuralNet.AddLayer( new Relu() );
     m_NeuralNet.AddLayer( new FullyConnected( 15 ) );
     m_NeuralNet.AddLayer( new Relu() );
-    m_NeuralNet.AddLayer( new FullyConnected( inputShape.Size() ) );
+    m_NeuralNet.AddLayer( new FullyConnected( 100 ) );
+    m_NeuralNet.AddLayer( new Relu() );
+    m_NeuralNet.AddLayer( new FullyConnected( 400 ) );
+    m_NeuralNet.AddLayer( new Relu() );
+    m_NeuralNet.AddLayer( new FullyConnected( m_InputShape.Size() ) );
     m_NeuralNet.AddLayer( new Sigmoid() );
-    m_NeuralNet.Compile( inputShape );
+    m_NeuralNet.Compile( m_InputShape );
 
     if( !LoadCelebADataset( "D:\\Dev\\DeepLearning Datasets\\CelebA", halfRes, 2.0f, 0.02f,
                             m_TrainingData, m_ValidationData, m_TrainingMetaData, m_ValidationMetaData ) )
@@ -450,4 +505,9 @@ void Example4::Train( const HyperParameters& _params )
 void Example4::Draw( CDC& _dc )
 {
     PlotLearningCurve( _dc, CRect( 10, 400, 800, 800 ) );
+    DrawConvolutionLayerFeatures( _dc, 1, 5, 5, 3 );
+
+    const Layer* outputLayer = m_NeuralNet.DbgGetLayer( m_NeuralNet.DbgGetLayerCount() - 1 );
+
+    DrawImage( _dc, outputLayer->GetOutput(), m_InputShape, 1000, 300, 3 );
 }

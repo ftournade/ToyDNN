@@ -35,4 +35,15 @@ namespace ToyDNN
 		_stream.read( (char*)&_val, sizeof( T ) );
 	}
 	
+	class Color
+	{
+	public:
+		Color() {}
+		Color( float r, float g, float b ) : R( r ), G( g ), B( b ) {}
+		void Saturate();
+
+		inline operator COLORREF() const { return RGB( (int)(R * 255.0f), (int)(G * 255.0f), (int)(B * 255.0f) ); }
+
+		float R, G, B;
+	};
 }
