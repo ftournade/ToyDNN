@@ -54,6 +54,9 @@ namespace ToyDNN
 			std::vector<Scalar> ValidationSetError;
 			
 			uint32_t NumEpochCompleted = 0;
+			uint32_t NumSamplesCompleted = 0;
+			float CurrentAccuracy = 0.0f;
+			float BestAccuracy = 0.0f;
 		};
 
 		const History& GetHistory() const { return m_History; }

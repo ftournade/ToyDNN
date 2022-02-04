@@ -88,14 +88,16 @@ namespace ToyDNN
 		m_IsTraining = true;
 		m_StopTraining = false;
 
+		Log( "Start training\n" );
+
 		uint32_t numTrainingSamples = (uint32_t)_trainingSet.size();
 		uint32_t numValidationSamples = (uint32_t)_trainingSet.size();
 
 		Tensor out;
 
-		for( uint32_t epoch = 0; (epoch < _numEpochs) && !m_StopTraining ; ++epoch )
+		for( ; m_History.NumEpochCompleted < _numEpochs ; ++m_History.NumEpochCompleted )
 		{
-			for( uint32_t batch = 0 ; (batch <= numTrainingSamples / _batchSize) && !m_StopTraining ; ++batch )
+			for( uint32_t batch = m_History.NumSamplesCompleted / _batchSize ; batch <= numTrainingSamples / _batchSize ; ++batch )
 			{
 				ClearWeightDeltas();
 
@@ -105,50 +107,73 @@ namespace ToyDNN
 
 				auto start = std::chrono::steady_clock::now();
 
-				for( uint32_t batchSample = 0 ; batchSample < batchSize ; ++batchSample )
+				for( uint32_t batchSample = m_History.NumSamplesCompleted - batch * batchSize ; batchSample < batchSize ; ++batchSample )
 				{
 					uint32_t sampleIndex = batch * _batchSize + batchSample;
+
+					//Log( "epoch: %d sample: %d/%d\n", m_History.NumEpochCompleted, sampleIndex, numTrainingSamples );
 
 					Evaluate( _trainingSet[sampleIndex], out );
 					trainingError += ComputeError( out, _trainingSetExpectedOutput[sampleIndex] );
 					BackPropagation( _trainingSet[sampleIndex], _trainingSetExpectedOutput[sampleIndex] );
+				
+					++m_History.NumSamplesCompleted;
 				}
 
 				auto end = std::chrono::steady_clock::now();
 				float elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() / 1000.0f;
 
 				trainingError /= batchSize;
-				//Log( "epoch %d batch %d (%d samples) took %.1fs, error: %f\n", epoch, batch, batchSize, elapsedTime, error );
+				Log( "epoch %d batch %d (%d samples) took %.1fs, training error: %f\n", m_History.NumEpochCompleted, batch, batchSize, elapsedTime, trainingError );
 
-				Scalar fEpoch = Scalar( m_History.NumEpochCompleted ) + Scalar(batch + 1) / Scalar(1 + (numTrainingSamples / _batchSize));
+				Scalar fEpoch = Scalar( m_History.NumEpochCompleted ) + Scalar( m_History.NumSamplesCompleted ) / Scalar(numTrainingSamples);
 
 				m_History.TrainingSetErrorXAxis.push_back( fEpoch );
 				m_History.TrainingSetError.push_back( trainingError );
 
-				ApplyWeightDeltas( _learningRate/*TODO divide by batch size ?*/ );
+				ApplyWeightDeltas( _learningRate / Scalar( batchSize ) );
 
 				//Every N batches or last batch of epoch
+				
 				bool bEvaluateValidationSet = (batch % _validationInterval == 0) || (batch == (numTrainingSamples / _batchSize) - 1);
 
 				if( bEvaluateValidationSet )
 				{
+					Log( "Start evaluating validation set\n" );
+					auto validationEvalStart = std::chrono::steady_clock::now();
+					
 					Scalar validationSetError = ComputeError( _validationSet, _validationSetExpectedOutput );
+					
+					auto validationEvalEnd = std::chrono::steady_clock::now();
+					float validationEvalDuration = std::chrono::duration_cast<std::chrono::milliseconds>(validationEvalEnd - validationEvalStart).count() / 1000.0f;
+					Log( "End evaluating validation set (%.1fs)\n", validationEvalDuration );
+					//Log( "Validation set error: %f\n", validationSetError );
 
 					m_History.ValidationSetErrorXAxis.push_back( fEpoch );
 					m_History.ValidationSetError.push_back( validationSetError );
 
-					//Log( "Validation set error: %f\n", validationSetError );
 
 					if( validationSetError <= _errorTarget )
 					{
 						m_IsTraining = false;
+						//Log( "stop train: error target met\n" );
 						return;
 					}
 				}
+
+				if( m_StopTraining )
+				{
+					m_IsTraining = false;
+					Log( "Force stop training\n" );
+					return;
+				}
+
 			}
 
-			m_History.NumEpochCompleted++;
+			m_History.NumSamplesCompleted = 0;
 		}
+
+		Log( "Stop training\n" );
 
 		m_IsTraining = false;
 	}
@@ -261,7 +286,10 @@ namespace ToyDNN
 
 		if( m_EnableClassificationAccuracyLog )
 		{
-			Log( "accuracy: %.1f%%\n", 100.0f * (float)validClassificationCount / (float)_dataSet.size() );
+			m_History.CurrentAccuracy = 100.0f * (float)validClassificationCount / (float)_dataSet.size();
+			m_History.BestAccuracy = std::max( m_History.BestAccuracy, m_History.CurrentAccuracy );
+
+			Log( "accuracy: %.1f%%\n", m_History.CurrentAccuracy );
 		}
 
 		return error / (float)_dataSet.size();
@@ -323,6 +351,9 @@ namespace ToyDNN
 		m_History.ValidationSetError.clear();
 
 		m_History.NumEpochCompleted = 0;
+		m_History.NumSamplesCompleted = 0;
+		m_History.CurrentAccuracy = 0.0f;
+		m_History.BestAccuracy = 0.0f;
 	}
 
 	bool NeuralNetwork::Load( const char* _filename )
@@ -393,7 +424,7 @@ namespace ToyDNN
 		assert( _dataSet.size() == _dataSetExpectedOutput.size() );
 
 		const Scalar epsilon = Scalar(1e-8);
-		const Scalar gradientTolerance = Scalar(0.1);
+		const Scalar gradientTolerance = Scalar(0.01);
 
 		//Evaluate gradients through with back propagation
 
@@ -409,6 +440,8 @@ namespace ToyDNN
 
 		//Now compute "ground thruth" gradients with finite difference and compare them to back propagation gradients
 
+		uint32_t badGradients = 0;
+
 		for( uint32_t i = 0 ; i < _numRandomParametersToCheck ; ++i )
 		{
 			//Pick a random parameter on a random layer
@@ -421,6 +454,8 @@ namespace ToyDNN
 				randomLayer = rand() % m_Layers.size();
 			} while( !m_Layers[randomLayer]->GetRandomParameterAndAssociatedGradient( &pParameter, backPropGradient ) );
 
+			backPropGradient /= Scalar( _dataSet.size() );
+			
 			Scalar originalParamValue = *pParameter;
 		
 			//Compute Loss( param + epsilon )
@@ -439,6 +474,7 @@ namespace ToyDNN
 			if( gradientError > gradientTolerance )
 			{
 			//	assert( false );
+				++badGradients;
 				Log( "Bad gradient (%f != %f, error=%.3f%%) found in layer %d. Probably a back propagation bug !\n", 
 					 backPropGradient, groundThruthGradient, 100.0f * gradientError, randomLayer );
 			}
@@ -446,6 +482,8 @@ namespace ToyDNN
 			//restore the parameter
 			*pParameter = originalParamValue;
 		}
+
+		Log( "%.2f%% of gradients were bad\n", (100.0f * badGradients) / (float)_numRandomParametersToCheck );
 	}
 
 }

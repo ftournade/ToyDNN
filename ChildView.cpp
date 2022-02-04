@@ -51,6 +51,8 @@ BOOL CChildView::PreCreateWindow(CREATESTRUCT& cs)
 
 void CChildView::OnPaint() 
 {
+	Log( "Begin: OnPaint\n" );
+
 	CPaintDC dc(this); // device context for painting
 
 	theApp.m_pExample->PauseTraining();
@@ -77,6 +79,7 @@ void CChildView::OnPaint()
 	m_backBuffer.Blit( dc.GetSafeHdc() );
 
 	theApp.m_pExample->ResumeTraining();
+	Log( "End: OnPaint\n" );
 }
 
 

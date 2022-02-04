@@ -15,6 +15,10 @@ BaseExample::~BaseExample()
 
 void BaseExample::StopTraining( bool _waitForTrainingToStop )
 {
+    Log( "BaseExample::StopTraining\n" );
+
+    m_StopTraining = true;
+
     m_NeuralNet.StopTraining();
 
     if( _waitForTrainingToStop )
@@ -28,14 +32,26 @@ void BaseExample::StopTraining( bool _waitForTrainingToStop )
 
 void BaseExample::PauseTraining()
 {
+    Log( "BaseExample::PauseTraining\n" );
+
     m_IsTrainingPaused = true;
 
-    StopTraining( true );
+    m_NeuralNet.StopTraining();
+
+    //if( _waitForTrainingToStop )
+    {
+        while( m_NeuralNet.IsTraining() )
+        {
+            Sleep( 20 );
+        }
+    }
 }
 
 void BaseExample::ResumeTraining()
 {
-    m_IsTrainingPaused = false; 
+    Log( "BaseExample::ResumeTraining\n" );
+
+    m_IsTrainingPaused = false;
 }
 
 void BaseExample::TrainingThread( const HyperParameters& _params )
@@ -52,8 +68,11 @@ void BaseExample::TrainingThread( const HyperParameters& _params )
 
         Train( _params );
 
-        if( !m_IsTrainingPaused )
+        if( m_StopTraining )
+        {
+            m_StopTraining = false;
             return;
+        }
     }
 }
 
@@ -65,6 +84,66 @@ void BaseExample::PlotLearningCurve( CDC& _dc, const CRect& _r ) const
     plot.PlotCurve( "Validation error", "x", "y", Color( 0, 1, 0 ), 3, m_NeuralNet.GetHistory().ValidationSetErrorXAxis, m_NeuralNet.GetHistory().ValidationSetError );
     plot.Draw( _dc, _r, Plot::ShowXAxis );
 }
+
+void BaseExample::DrawConvolutionLayerFeatures( CDC& _dc, uint32_t _layerIndex, int _x, int _y, uint32_t _zoom )
+{
+    assert( m_NeuralNet.DbgGetLayer( _layerIndex )->GetType() == LayerType::Convolution2D );
+
+    const TensorShape& convOutputShape = m_NeuralNet.DbgGetLayer( _layerIndex )->GetOutputShape();
+    const Tensor& convOutput = m_NeuralNet.DbgGetLayer( _layerIndex )->GetOutput();
+
+    uint32_t sx = convOutputShape.m_SX;
+    uint32_t sy = convOutputShape.m_SY;
+
+    for( uint32_t f = 0 ; f < convOutputShape.m_SZ ; ++f )
+    {
+    #if 1
+        float vmin = FLT_MAX;
+        float vmax = -FLT_MAX;
+
+        for( uint32_t y = 0 ; y < sy ; ++y )
+        {
+            for( uint32_t x = 0 ; x < sx ; ++x )
+            {
+                float v = (float)convOutput[f * sx * sx + y * sx + x];
+
+                vmin = std::min( vmin, v );
+                vmax = std::max( vmax, v );
+            }
+        }
+
+        float scale = 1.0f / (vmax - vmin);
+    #else
+        float scale = 1.0f;
+        float vmin = 0.0f;
+    #endif
+
+        for( uint32_t y = 0 ; y < sy ; ++y )
+        {
+            for( uint32_t x = 0 ; x < sx ; ++x )
+            {
+                float v = (float)convOutput[f * sx * sy + y * sx + x];
+                v = (v - vmin) * scale;
+
+                v = v * 255.0f;
+                v = std::min( v, 255.0f );
+                v = std::max( v, 0.0f );
+
+                DWORD col = RGB( (int)v, (int)v, (int)v );
+
+                CRect r( x * _zoom, 
+                         y * _zoom, 
+                         (x + 1) * _zoom, 
+                         (y + 1) * _zoom );
+                r.OffsetRect( _x + f * (_zoom * sx + 3), _y );
+
+                _dc.FillSolidRect( r, col );
+            }
+        }
+    }
+
+}
+
 
 //=========================================
 
@@ -99,9 +178,9 @@ Example2::Example2()
 {
     srand( 666 );
 
-    m_NeuralNet.AddLayer( new FullyConnected( 100 ) );
+    m_NeuralNet.AddLayer( new FullyConnected( 10 ) );
     m_NeuralNet.AddLayer( new LeakyRelu() );
-    m_NeuralNet.AddLayer( new FullyConnected( 100 ) );
+    m_NeuralNet.AddLayer( new FullyConnected( 10 ) );
     m_NeuralNet.AddLayer( new LeakyRelu() );
     m_NeuralNet.AddLayer( new FullyConnected( 1 ) );
     m_NeuralNet.AddLayer( new Tanh() );
@@ -135,7 +214,7 @@ Example2::Example2()
 
 void Example2::GradientCheck()
 {
-    m_NeuralNet.GradientCheck( m_Input, m_ExpectedOutput, 50 );
+    m_NeuralNet.GradientCheck( m_Input, m_ExpectedOutput, 500 );
 }
 
 void Example2::Train( const HyperParameters& _params )
@@ -190,10 +269,13 @@ Example3::Example3()
     else
     {
         m_NeuralNet.AddLayer( new Convolution2D( m_NumFeatureMaps, m_KernelSize, m_Stride ) );
-        m_NeuralNet.AddLayer( new LeakyRelu() );
+        m_NeuralNet.AddLayer( new Relu() );
         m_NeuralNet.AddLayer( new MaxPooling( 2, 2 ) );
-        m_NeuralNet.AddLayer( new FullyConnected( 100 ) );
-        m_NeuralNet.AddLayer( new LeakyRelu() );
+        m_NeuralNet.AddLayer( new Convolution2D( m_NumFeatureMaps*2, m_KernelSize, m_Stride ) );
+        m_NeuralNet.AddLayer( new Relu() );
+        m_NeuralNet.AddLayer( new MaxPooling( 2, 2 ) );
+        m_NeuralNet.AddLayer( new FullyConnected( 200 ) );
+        m_NeuralNet.AddLayer( new Relu() );
         m_NeuralNet.AddLayer( new FullyConnected( 10 ) );
         m_NeuralNet.AddLayer( new Sigmoid() );
         m_NeuralNet.Compile( TensorShape( m_ImageRes, m_ImageRes, numChannels ) );
@@ -228,7 +310,7 @@ Example3::Example3()
 
 void Example3::GradientCheck()
 {
-    m_NeuralNet.GradientCheck( m_ValidationData, m_ValidationMetaData, 500 );
+    m_NeuralNet.GradientCheck( m_ValidationData, m_ValidationMetaData, 50 );
 }
 
 void Example3::Train( const HyperParameters& _params )
@@ -249,15 +331,19 @@ void Example3::Draw( CDC& _dc )
         
     RECT r = { m_UserDrawDigitRect.left, m_UserDrawDigitRect.bottom, m_UserDrawDigitRect.right, m_UserDrawDigitRect.bottom + 30 };
 
-    TCHAR buffer[64];
+    TCHAR buffer[256];
     _stprintf_s( buffer, _T("Recognized digit: %d"), m_RecognizedDigit );
     _dc.DrawText( buffer, -1, &r, DT_CENTER );
     
     DrawUserDrawnDigit( _dc );
     
-    DrawConvolutionLayerFeatures( _dc, 3 ); //SLOW
+    DrawConvolutionLayerFeatures( _dc, 0, 5, 5, 4 );
+    DrawConvolutionLayerFeatures( _dc, 3, 5, 120, 4 );
 
     PlotLearningCurve( _dc, CRect( 10, 400, 800, 800 ) );
+
+    _stprintf_s( buffer, _T( "Current accuracy: %.1f%% Best accuracy %.1f%%" ), m_NeuralNet.GetHistory().CurrentAccuracy, m_NeuralNet.GetHistory().BestAccuracy );
+    _dc.DrawText( buffer, -1, &CRect( 10, 800, 800, 840 ), DT_CENTER );
 }
 
 bool Example3::OnLMouseButtonDown( const CPoint& p )
@@ -300,57 +386,6 @@ bool Example3::OnRMouseButtonDown( const CPoint& p )
     return true;
 }
 
-void Example3::DrawConvolutionLayerFeatures( CDC& _dc, uint32_t _zoom )
-{
-    uint32_t s = (m_ImageRes - m_KernelSize + 1) / (m_Stride * m_Stride);
-
-    const Tensor& convOutput = m_NeuralNet.DbgGetLayer( 0 )->GetOutput();
-
-    for( uint32_t f = 0 ; f < m_NumFeatureMaps ; ++f )
-    {
-    #if 1
-        float vmin = FLT_MAX;
-        float vmax = -FLT_MAX;
-
-        for( uint32_t y = 0 ; y < s ; ++y )
-        {
-            for( uint32_t x = 0 ; x < s ; ++x )
-            {
-                float v = (float)convOutput[f * s * s + y * s + x];
-                
-                vmin = std::min( vmin, v );
-                vmax = std::max( vmax, v );
-            }
-        }
-                 
-        float scale = 1.0f / (vmax - vmin);
-    #else
-        float scale = 1.0f;
-        float vmin = 0.0f;
-    #endif
-
-        for( uint32_t y = 0 ; y < s ; ++y )
-        {
-            for( uint32_t x = 0 ; x < s ; ++x )
-            {
-                float v = (float)convOutput[ f * s * s + y * s + x ];
-                v = (v - vmin) * scale;
-
-                v = v * 255.0f;
-                v = std::min( v, 255.0f );
-                v = std::max( v, 0.0f );
-
-                DWORD col = RGB( (int)v, (int)v, (int)v );
-
-                CRect r( x * _zoom, y * _zoom, (x + 1) * _zoom, (y + 1) * _zoom );
-                r.OffsetRect( f * (_zoom * s + 3), 0 );
-
-                _dc.FillSolidRect( r, col );
-            }
-        }
-    }
-
-}
 
 void Example3::DrawUserDrawnDigit( CDC& _dc )
 {

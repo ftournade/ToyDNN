@@ -6,11 +6,11 @@
 
 void TrainingThread( HyperParameters _params )
 {
-	Log( "Training started" );
+	Log( "Training thread started\n" );
 
 	theApp.m_pExample->TrainingThread( _params );
 
-	Log( "Training stopped" );
+	Log( "Training thread stopped\n" );
 }
 
 IMPLEMENT_DYNAMIC( CControlPane, CPaneDialog )
@@ -130,6 +130,8 @@ void CControlPane::OnStartStopTraining()
 		theApp.m_pExample->StopTraining();
 	
 		KillTimer( m_DisplayRefreshTimer );
+
+		((CMainFrame*)theApp.GetMainWnd())->GetChildView().Invalidate( FALSE );
 	}
 }
 

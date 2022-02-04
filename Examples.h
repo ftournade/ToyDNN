@@ -42,11 +42,13 @@ protected:
 	inline bool IsLMouseButtonDown() const { return m_LMouseButtonDown; }
 
 	void PlotLearningCurve( CDC& _dc, const CRect& _r ) const;
+	void DrawConvolutionLayerFeatures( CDC& _dc, uint32_t _layerIndex, int _x, int _y, uint32_t _zoom=1 );
 
 protected:
 	HWND m_hWnd = 0;
 	NeuralNetwork m_NeuralNet;
 	bool m_IsTrainingPaused = false;
+	bool m_StopTraining = false;
 
 	bool m_LMouseButtonDown = false;
 	bool m_RMouseButtonDown = false;
@@ -103,7 +105,6 @@ public:
 	virtual bool OnMouseMove( const CPoint& p ) override;
 
 private:
-	void DrawConvolutionLayerFeatures( CDC& _dc, uint32_t _zoom=1 );
 	void DrawUserDrawnDigit( CDC& _dc );
 private:
 
@@ -114,8 +115,8 @@ private:
 	static const uint32_t m_ImageRes = 28;
 	const char* m_NeuralNetFilename = "D:/tmp/example3_mnist.dnn";
 	#endif
-	static const uint32_t m_NumFeatureMaps = 8;
-	static const uint32_t m_KernelSize = 5;
+	static const uint32_t m_NumFeatureMaps = 16;
+	static const uint32_t m_KernelSize = 3;
 	static const uint32_t m_Stride = 1;
 
 	bool m_IsTrained = false;
