@@ -26,6 +26,7 @@ namespace ToyDNN
 
 		virtual void Forward( const Tensor& _in, Tensor& _out ) const override
 		{
+			//#pragma omp parallel for
 			for( int z = 0 ; z < (int)m_OutputShape.m_SZ ; ++z )
 			{
 				for( int y = 0 ; y < (int)m_OutputShape.m_SY ; ++y )
@@ -64,13 +65,12 @@ namespace ToyDNN
 			}
 		}
 
-		virtual void ClearWeightDeltas() override {}
-		virtual void ApplyWeightDeltas( Scalar _learningRate ) override {}
-
+		
 		virtual void BackPropagation( const Tensor& _layerInputs, const Tensor& _outputGradients, Tensor& _inputGradients ) override
 		{
 			std::fill( _inputGradients.begin(), _inputGradients.end(), Scalar( 0.0 ) );
 				
+			//#pragma omp parallel for
 			for( int z = 0 ; z < (int)m_OutputShape.m_SZ ; ++z )
 			{
 				for( int y = 0 ; y < (int)m_OutputShape.m_SY ; ++y )

@@ -4,7 +4,6 @@
 #include "Layers/FullyConnectedLayer.h"
 #include "Layers/Convolution2DLayer.h"
 #include "Layers/MaxPoolingLayer.h"
-
 #include <memory>
 
 namespace ToyDNN
@@ -18,17 +17,18 @@ namespace ToyDNN
 		void Compile( const TensorShape& _inputShape );
 
 		//Return error metric
-		void Train(	 const std::vector<Tensor>& _trainingSet,
+		void Train(	 Optimizer& _optimizer,
+					 const std::vector<Tensor>& _trainingSet,
 					 const std::vector<Tensor>& _trainingSetExpectedOutput,
 					 const std::vector<Tensor>& _validationSet,
 					 const std::vector<Tensor>& _validationSetExpectedOutput,
 					 uint32_t _numEpochs, uint32_t _batchSize, uint32_t _validationInterval /*evaluate vaildationSet every N batch*/,
-					 Scalar _learningRate, Scalar _errorTarget = 0.0001f );
+					 Scalar _errorTarget = 0.0001f );
 		
 		void StopTraining() { m_StopTraining = true; }
 		bool IsTraining() { return m_IsTraining; }
 
-		void Evaluate( const Tensor& _in, Tensor& _out ) const;
+		void Evaluate( const Tensor& _in, Tensor& _out, bool _cacheLayersOutput=false ) const;
 
 		static void ComputeError( const Tensor& _out, const Tensor& _expectedOutput, Tensor& _error );
 		static Scalar ComputeError( const Tensor& _out, const Tensor& _expectedOutput );
@@ -66,8 +66,9 @@ namespace ToyDNN
 		bool Save( const char* _filename, bool _saveTrainingHistory = false ) const;
 
 	private:
-		void ClearWeightDeltas();
-		void ApplyWeightDeltas( Scalar _learningRate );
+		void ClearGradients();
+		void ScaleGradients( Scalar _scale );
+		void ApplyGradients( Optimizer& _optimizer );
 		void BackPropagation( const Tensor& _input, const Tensor& _expectedOutput );
 
 	private:

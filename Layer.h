@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Tensor.h"
+#include "Optimizers.h"
 #include "Util.h"
 
 #undef min
@@ -34,9 +35,10 @@ namespace ToyDNN
 		virtual LayerType GetType() const = 0;
 		virtual void Setup( const TensorShape& _previousLayerOutputShape ) = 0;
 		virtual void Forward( const Tensor& _in, Tensor& _out ) const = 0;
-		virtual void ClearWeightDeltas() = 0;
-		virtual void ApplyWeightDeltas( Scalar _learningRate ) = 0;
-		virtual void BackPropagation( const Tensor& _layerInputs, const Tensor& _outputGradients/*in*/, Tensor& _inputGradients /*out*/ ) = 0;
+		virtual void ClearGradients() {}
+		virtual void ScaleGradients( Scalar _scale ) {}
+		virtual void ApplyGradients( Optimizer& _optimizer ) {}
+		virtual void BackPropagation( const Tensor& _layerInputs, const Tensor& _output, Tensor& _inputGradients ) = 0;
 		virtual bool GetRandomParameterAndAssociatedGradient( Scalar** _parameter, Scalar& _gradient ) { return false; } //used for gradient checking
 
 		inline const TensorShape& GetInputShape() const { return m_InputShape; }
@@ -67,23 +69,24 @@ namespace ToyDNN
 	class WeightsAndBiasesLayer : public Layer
 	{
 	public:
-		virtual void ClearWeightDeltas() override
+		virtual void ClearGradients() override
 		{
-			std::fill( m_DeltaWeights.begin(), m_DeltaWeights.end(), 0.0f );
-			std::fill( m_DeltaBiases.begin(), m_DeltaBiases.end(), 0.0f );
+			std::fill( m_WeightGradients.begin(), m_WeightGradients.end(), 0.0f );
+			std::fill( m_BiasGradients.begin(), m_BiasGradients.end(), 0.0f );
 		}
 
-		virtual void ApplyWeightDeltas( Scalar _learningRate ) override
+		virtual void ScaleGradients( Scalar _scale ) override
 		{
-			for( uint32_t i = 0 ; i < m_DeltaWeights.size() ; ++i )
-			{
-				m_Weights[i] -= _learningRate * m_DeltaWeights[i];
-			}
+			auto scaler = [&]( Scalar s )->Scalar { return s * _scale; };
 
-			for( uint32_t i = 0 ; i < m_DeltaBiases.size() ; ++i )
-			{
-				m_Biases[i] -= _learningRate * m_DeltaBiases[i];
-			}
+			std::transform( m_WeightGradients.begin(), m_WeightGradients.end(), m_WeightGradients.begin(), scaler );
+			std::transform( m_BiasGradients.begin(), m_BiasGradients.end(), m_BiasGradients.begin(), scaler );
+		}
+
+		virtual void ApplyGradients( Optimizer& _optimizer ) override
+		{
+			_optimizer.UpdateTrainableParameters( m_WeightGradients, m_Weights );
+			_optimizer.UpdateTrainableParameters( m_BiasGradients, m_Biases );
 		}
 
 		virtual bool GetRandomParameterAndAssociatedGradient( Scalar** _parameter, Scalar& _gradient ) override
@@ -95,13 +98,13 @@ namespace ToyDNN
 			{
 				uint32_t weightIdx = rand() % m_Weights.size();
 				*_parameter = &m_Weights[weightIdx];
-				_gradient = m_DeltaWeights[weightIdx];
+				_gradient = m_WeightGradients[weightIdx];
 			}
 			else
 			{
 				uint32_t biasIdx = rand() % m_Biases.size();
 				*_parameter = &m_Biases[biasIdx];
-				_gradient = m_DeltaBiases[biasIdx];
+				_gradient = m_BiasGradients[biasIdx];
 			}
 
 			return true;
@@ -136,8 +139,8 @@ namespace ToyDNN
 	protected:
 		std::vector<Scalar> m_Weights;
 		std::vector<Scalar> m_Biases;
-		std::vector<Scalar> m_DeltaWeights;
-		std::vector<Scalar> m_DeltaBiases;
+		std::vector<Scalar> m_WeightGradients;
+		std::vector<Scalar> m_BiasGradients;
 	};
 
 	Layer* CreateLayer( LayerType _type );

@@ -210,7 +210,9 @@ void Example1::Train( const HyperParameters& _params )
     const int numEpochs = 10000000;
     const float errorTarget = 0.0000001f;
 
-    m_NeuralNet.Train( m_Input, m_ExpectedOutput, m_Input, m_ExpectedOutput,
+    m_Optimizer.LearningRate = _params.LearningRate;
+
+    m_NeuralNet.Train( m_Optimizer, m_Input, m_ExpectedOutput, m_Input, m_ExpectedOutput,
                        numEpochs, _params.BatchSize, _params.ValidationInterval, _params.LearningRate );
 }
 
@@ -270,8 +272,10 @@ void Example2::Train( const HyperParameters& _params )
     const int numEpochs = 10000000;
     const float errorTarget = 0.0000001f;
 
-    m_NeuralNet.Train( m_Input, m_ExpectedOutput, m_Input, m_ExpectedOutput,
-                       numEpochs, _params.BatchSize, _params.ValidationInterval, _params.LearningRate );
+    m_Optimizer.LearningRate = _params.LearningRate;
+
+    m_NeuralNet.Train( m_Optimizer, m_Input, m_ExpectedOutput, m_Input, m_ExpectedOutput,
+                       numEpochs, _params.BatchSize, _params.ValidationInterval );
 }
 
 void Example2::Draw( CDC& _dc )
@@ -316,15 +320,17 @@ Example3::Example3()
     else
     {
         m_NeuralNet.AddLayer( new Convolution2D( m_NumFeatureMaps, m_KernelSize, m_Stride ) );
-        m_NeuralNet.AddLayer( new LeakyRelu() );
+        m_NeuralNet.AddLayer( new Relu() );
         m_NeuralNet.AddLayer( new MaxPooling( 2, 2 ) );
-      //  m_NeuralNet.AddLayer( new Convolution2D( m_NumFeatureMaps*2, m_KernelSize, m_Stride ) );
-      //  m_NeuralNet.AddLayer( new LeakyRelu() );
-      //  m_NeuralNet.AddLayer( new MaxPooling( 2, 2 ) );
+        m_NeuralNet.AddLayer( new Convolution2D( m_NumFeatureMaps*2, m_KernelSize, m_Stride ) );
+        m_NeuralNet.AddLayer( new Relu() );
+        m_NeuralNet.AddLayer( new MaxPooling( 2, 2 ) );
+        m_NeuralNet.AddLayer( new FullyConnected( 1000 ) );
+        m_NeuralNet.AddLayer( new Relu() );
         m_NeuralNet.AddLayer( new FullyConnected( 200 ) );
-        m_NeuralNet.AddLayer( new LeakyRelu() );
+        m_NeuralNet.AddLayer( new Relu() );
         m_NeuralNet.AddLayer( new FullyConnected( 10 ) );
-        m_NeuralNet.AddLayer( new Sigmoid() );
+        m_NeuralNet.AddLayer( new SoftMax() );
         m_NeuralNet.Compile( TensorShape( m_ImageRes, m_ImageRes, numChannels ) );
         m_NeuralNet.EnableClassificationAccuracyLog();
 
@@ -333,7 +339,7 @@ Example3::Example3()
                                  m_TrainingData, m_ValidationData, m_TrainingMetaData, m_ValidationMetaData ) )
             throw std::exception( "Can't load Cifar10 database" );
     #else
-        if( !LoadMnistDataset( "D:\\Dev\\DeepLearning Datasets\\MNIST",
+        if( !LoadMnistDataset( "D:\\Dev\\DeepLearning Datasets\\MNIST_fashion",
                                0.0f, 1.0f, 0, 0,
                                m_TrainingData, m_ValidationData, m_TrainingMetaData, m_ValidationMetaData ) )
             throw std::exception( "Can't load MNIST database" );
@@ -371,15 +377,17 @@ void Example3::Train( const HyperParameters& _params )
     const int numEpochs = 10000000;
     const float errorTarget = 0.0000001f;
 
-    m_NeuralNet.Train( m_TrainingData, m_TrainingMetaData, m_ValidationData, m_ValidationMetaData,
-                       numEpochs, _params.BatchSize, _params.ValidationInterval, _params.LearningRate );
+    m_Optimizer.LearningRate = _params.LearningRate;
+
+    m_NeuralNet.Train( m_Optimizer, m_TrainingData, m_TrainingMetaData, m_ValidationData, m_ValidationMetaData,
+                       numEpochs, _params.BatchSize, _params.ValidationInterval );
 }
 
 void Example3::Draw( CDC& _dc )
 {
-    Tensor out;
-    m_NeuralNet.Evaluate( m_UserDrawnDigit, out );
-    m_RecognizedDigit = GetMostProbableClassIndex( out );
+ //   Tensor out;
+ //   m_NeuralNet.Evaluate( m_UserDrawnDigit, out );
+ //   m_RecognizedDigit = GetMostProbableClassIndex( out );
         
     RECT r = { m_UserDrawDigitRect.left, m_UserDrawDigitRect.bottom, m_UserDrawDigitRect.right, m_UserDrawDigitRect.bottom + 30 };
 
@@ -390,7 +398,7 @@ void Example3::Draw( CDC& _dc )
     DrawUserDrawnDigit( _dc );
     
     DrawConvolutionLayerFeatures( _dc, 2, 5, 5, 4 );
-    //DrawConvolutionLayerFeatures( _dc, 5, 5, 120, 4 );
+    DrawConvolutionLayerFeatures( _dc, 5, 5, 120, 4 );
 
     PlotLearningCurve( _dc, CRect( 10, 400, 800, 800 ) );
 
@@ -466,7 +474,7 @@ void Example3::DrawUserDrawnDigit( CDC& _dc )
 
 Example4::Example4()
 {
-    srand( 111 );
+    srand( 333 );
 
     const bool halfRes = true;
 
@@ -498,8 +506,10 @@ void Example4::Train( const HyperParameters& _params )
     const int numEpochs = 10000000;
     const float errorTarget = 0.0000001f;
 
-    m_NeuralNet.Train( m_TrainingData, m_TrainingData, m_ValidationData, m_ValidationData,
-                       numEpochs, _params.BatchSize, _params.ValidationInterval, _params.LearningRate );
+    m_Optimizer.LearningRate = _params.LearningRate;
+
+    m_NeuralNet.Train( m_Optimizer, m_TrainingData, m_TrainingData, m_ValidationData, m_ValidationData,
+                       numEpochs, _params.BatchSize, _params.ValidationInterval );
 }
 
 void Example4::Draw( CDC& _dc )

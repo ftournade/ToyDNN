@@ -66,6 +66,7 @@ public:
 	virtual void Draw( CDC& _dc ) override;
 
 protected:
+	SGDOptimizer m_Optimizer;
 	std::vector< Tensor > m_Input;
 	std::vector< Tensor > m_ExpectedOutput;
 };
@@ -82,6 +83,7 @@ public:
 	virtual void Draw( CDC& _dc ) override;
 
 protected:
+	SGDOptimizer m_Optimizer;
 	std::vector< Tensor > m_Input;
 	std::vector< Tensor > m_ExpectedOutput;
 
@@ -89,7 +91,7 @@ protected:
 };
 
 
-//#define USE_CIFAR10_INSTEAD_OF_MNIST
+#define USE_CIFAR10_INSTEAD_OF_MNIST
 //Basic MNIST classifier
 class Example3 : public BaseExample
 {
@@ -108,6 +110,7 @@ public:
 private:
 	void DrawUserDrawnDigit( CDC& _dc );
 private:
+	RMSpropOptimizer m_Optimizer;
 
 	#ifdef USE_CIFAR10_INSTEAD_OF_MNIST
 	static const uint32_t m_ImageRes = 32;
@@ -145,6 +148,8 @@ public:
 	virtual void Draw( CDC& _dc ) override;
 
 private:
+	SGDOptimizer m_Optimizer;
+
 	std::vector< Tensor > m_TrainingData;
 	std::vector< CelebAMetaData > m_TrainingMetaData;
 	std::vector< Tensor > m_ValidationData;

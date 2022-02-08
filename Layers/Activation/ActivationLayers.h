@@ -15,9 +15,6 @@ namespace ToyDNN
 			m_InputShape = _previousLayerOutputShape;
 			m_OutputShape = _previousLayerOutputShape;
 		}
-
-		virtual void ClearWeightDeltas() override {}
-		virtual void ApplyWeightDeltas( Scalar _learningRate ) override {}
 	};
 
 	//====================================================
@@ -31,7 +28,7 @@ namespace ToyDNN
 		{
 			uint32_t n = m_OutputShape.Size();
 
-			#pragma omp parallel for
+			//#pragma omp parallel for
 			for( int i = 0 ; i < (int)n ; ++i )
 			{
 				_out[i] = std::max( _in[i], Scalar(0.0) );
@@ -42,7 +39,7 @@ namespace ToyDNN
 		{
 			uint32_t n = m_OutputShape.Size();
 
-			#pragma omp parallel for
+			//#pragma omp parallel for
 			for( int i = 0 ; i < (int)n ; ++i )
 			{
 				Scalar gradient = _layerInputs[i] >= Scalar(0.0) ? Scalar(1.0) : Scalar(0.0);
@@ -69,7 +66,7 @@ namespace ToyDNN
 		{
 			uint32_t n = m_OutputShape.Size();
 			
-			#pragma omp parallel for
+			//#pragma omp parallel for
 			for( int i = 0 ; i < (int)n ; ++i )
 			{
 				_out[i] = _in[i] > 0.0f ? _in[i] : _in[i] * m_Leak;
@@ -80,7 +77,7 @@ namespace ToyDNN
 		{
 			uint32_t n = m_OutputShape.Size();
 
-		#pragma omp parallel for
+			//#pragma omp parallel for
 			for( int i = 0 ; i < (int)n ; ++i )
 			{
 				Scalar gradient = _layerInputs[i] > Scalar(0.0) ? Scalar(1.0) : m_Leak;
@@ -115,7 +112,7 @@ namespace ToyDNN
 		{
 			uint32_t n = m_OutputShape.Size();
 			
-			#pragma omp parallel for
+			//#pragma omp parallel for
 			for( int i = 0 ; i < (int)n ; ++i )
 			{
 				_out[i] = Scalar(1.0) / (Scalar(1.0) + std::exp( -_in[i] ));
@@ -126,7 +123,7 @@ namespace ToyDNN
 		{
 			uint32_t n = m_OutputShape.Size();
 
-			#pragma omp parallel for
+			//#pragma omp parallel for
 			for( int i = 0 ; i < (int)n ; ++i )
 			{
 				//This one is a bit special
@@ -151,7 +148,7 @@ namespace ToyDNN
 		{
 			uint32_t n = m_OutputShape.Size();
 			
-			#pragma omp parallel for
+			//#pragma omp parallel for
 			for( int i = 0 ; i < (int)n ; ++i )
 			{
 				_out[i] = std::tanh( _in[i] );
@@ -162,7 +159,7 @@ namespace ToyDNN
 		{
 			uint32_t n = m_OutputShape.Size();
 
-			#pragma omp parallel for
+			//#pragma omp parallel for
 			for( int i = 0 ; i < (int)n ; ++i )
 			{
 				//This one is a bit special

@@ -75,12 +75,13 @@ namespace ToyDNN
 		}
 	}
 
-	void NeuralNetwork::Train( const std::vector<Tensor>& _trainingSet,
+	void NeuralNetwork::Train(  Optimizer& _optimizer,
+							    const std::vector<Tensor>& _trainingSet,
 								const std::vector<Tensor>& _trainingSetExpectedOutput,
 								const std::vector<Tensor>& _validationSet,
 								const std::vector<Tensor>& _validationSetExpectedOutput,
 								uint32_t _numEpochs, uint32_t _batchSize, uint32_t _validationInterval,
-								Scalar _learningRate, Scalar _errorTarget )
+								Scalar _errorTarget )
 	{
 		assert( _trainingSet.size() == _trainingSetExpectedOutput.size() );
 		assert( _validationSet.size() == _validationSetExpectedOutput.size() );
@@ -97,11 +98,12 @@ namespace ToyDNN
 
 		for( ; m_History.NumEpochCompleted < _numEpochs ; ++m_History.NumEpochCompleted )
 		{
-			for( uint32_t batch = m_History.NumSamplesCompleted / _batchSize ; batch <= numTrainingSamples / _batchSize ; ++batch )
+			for( uint32_t batch = m_History.NumSamplesCompleted / _batchSize ; batch < numTrainingSamples / _batchSize ; ++batch )
 			{
-				ClearWeightDeltas();
+				ClearGradients();
 
 				uint32_t batchSize = std::min( _batchSize, numTrainingSamples - batch * _batchSize );
+				assert( batchSize > 0 );
 
 				Scalar trainingError = Scalar(0.0);
 
@@ -113,7 +115,7 @@ namespace ToyDNN
 
 					//Log( "epoch: %d sample: %d/%d\n", m_History.NumEpochCompleted, sampleIndex, numTrainingSamples );
 
-					Evaluate( _trainingSet[sampleIndex], out );
+					Evaluate( _trainingSet[sampleIndex], out, true );
 					trainingError += ComputeError( out, _trainingSetExpectedOutput[sampleIndex] );
 					BackPropagation( _trainingSet[sampleIndex], _trainingSetExpectedOutput[sampleIndex] );
 				
@@ -124,14 +126,15 @@ namespace ToyDNN
 				float elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() / 1000.0f;
 
 				trainingError /= batchSize;
-				Log( "epoch %d batch %d (%d samples) took %.1fs, training error: %f\n", m_History.NumEpochCompleted, batch, batchSize, elapsedTime, trainingError );
+				Log( "epoch %d batch %d (%d samples) took %.2fs, training error: %f\n", m_History.NumEpochCompleted, batch, batchSize, elapsedTime, trainingError );
 
 				Scalar fEpoch = Scalar( m_History.NumEpochCompleted ) + Scalar( m_History.NumSamplesCompleted ) / Scalar(numTrainingSamples);
 
 				m_History.TrainingSetErrorXAxis.push_back( fEpoch );
 				m_History.TrainingSetError.push_back( trainingError );
 
-				ApplyWeightDeltas( _learningRate / Scalar( batchSize ) );
+				ScaleGradients( Scalar( 1.0 ) / Scalar( batchSize ) );
+				ApplyGradients( _optimizer );
 
 				//Every N batches or last batch of epoch
 				
@@ -178,7 +181,7 @@ namespace ToyDNN
 		m_IsTraining = false;
 	}
 
-	void NeuralNetwork::Evaluate( const Tensor& _in, Tensor& _out ) const
+	void NeuralNetwork::Evaluate( const Tensor& _in, Tensor& _out, bool _cacheLayersOutput ) const
 	{
 		Tensor tmpTensor[2];
 		uint32_t curTensor = 0;
@@ -210,16 +213,18 @@ namespace ToyDNN
 			tensorOut->resize( m_Layers[layer]->GetOutputShape().Size() );
 
 			m_Layers[layer]->Forward( *tensorIn, *tensorOut );
-			m_Layers[layer]->CacheOutput( *tensorOut ); //For back propagation
+
+			if( _cacheLayersOutput )
+				m_Layers[layer]->CacheOutput( *tensorOut ); //For back propagation
 
 			curTensor = 1 - curTensor;//ping pong
 		}
 	}
 
-	void NeuralNetwork::ClearWeightDeltas()
+	void NeuralNetwork::ClearGradients()
 	{
 		for( auto& layer : m_Layers )
-			layer->ClearWeightDeltas();
+			layer->ClearGradients();
 	}
 
 	void NeuralNetwork::ComputeError( const Tensor& _out, const Tensor& _expectedOutput, Tensor& _error )
@@ -238,7 +243,7 @@ namespace ToyDNN
 	{
 		Scalar error = 0.0;
 
-		#pragma omp parallel for reduction(+:error)
+		//#pragma omp parallel for reduction(+:error)
 		for( int i = 0 ; i < (int)_out.size() ; ++i )
 		{
 			Scalar e = _out[i] - _expectedOutput[i];
@@ -267,20 +272,6 @@ namespace ToyDNN
 					++validClassificationCount;
 			}
 
-		#if 0 //Test
-			if( i < 8 )
-			{
-			#define SX (178/2)
-			#define SY (218/2)
-				char buf[512];
-				sprintf_s( buf, "d:\\tmp\\vs%d_in.bmp", i );
-				WriteBMP( buf, false, _dataSet[i], SX, SY );
-				sprintf_s( buf, "d:\\tmp\\vs%d_out.bmp", i );
-				WriteBMP( buf, false, out, SX, SY );
-			#undef SX
-			#undef SY
-			}
-		#endif
 			error += ComputeError( out, _dataSetExpectedOutput[i] );
 		}
 
@@ -337,10 +328,16 @@ namespace ToyDNN
 		}
 	}
 
-	void NeuralNetwork::ApplyWeightDeltas( Scalar _learningRate )
+	void NeuralNetwork::ScaleGradients( Scalar _scale )
 	{
 		for( auto& layer : m_Layers )
-			layer->ApplyWeightDeltas( _learningRate );
+			layer->ScaleGradients( _scale );
+	}
+
+	void NeuralNetwork::ApplyGradients( Optimizer& _optimizer )
+	{
+		for( auto& layer : m_Layers )
+			layer->ApplyGradients( _optimizer );
 	}
 
 	void NeuralNetwork::ClearHistory()
@@ -428,7 +425,7 @@ namespace ToyDNN
 
 		//Evaluate gradients through with back propagation
 
-		ClearWeightDeltas();
+		ClearGradients();
 
 		Tensor out;
 
@@ -469,7 +466,8 @@ namespace ToyDNN
 			//Compute gradient
 			Scalar groundThruthGradient = (error1 - error2) / (2.0f * epsilon);
 
-			Scalar gradientError = std::abs( (backPropGradient - groundThruthGradient) / groundThruthGradient );
+			Scalar gradientError = std::abs(backPropGradient - groundThruthGradient) / 
+									std::max( std::abs(backPropGradient), std::abs(groundThruthGradient) );
 
 			if( gradientError > gradientTolerance )
 			{

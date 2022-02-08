@@ -4,6 +4,8 @@
 #include "MainFrm.h"
 #include <thread>
 
+#define REFRESH_INTERVAL_IN_MS 5000
+
 void TrainingThread( HyperParameters _params )
 {
 	Log( "Training thread started\n" );
@@ -123,7 +125,7 @@ void CControlPane::OnStartStopTraining()
 		std::thread trainingThread( TrainingThread, params );
 		trainingThread.detach();
 
-		m_DisplayRefreshTimer = SetTimer( IDT_REFRESH_DISPLAY, 2000, nullptr );
+		m_DisplayRefreshTimer = SetTimer( IDT_REFRESH_DISPLAY, REFRESH_INTERVAL_IN_MS, nullptr );
 	}
 	else
 	{

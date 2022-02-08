@@ -24,10 +24,10 @@ namespace ToyDNN
 
 			m_KernelShape = TensorShape( m_KernelSize, m_KernelSize, m_InputShape.m_SZ );
 			m_Weights.resize( m_NumFeatureMaps * m_KernelShape.Size() );
-			m_DeltaWeights.resize( m_Weights.size() );
+			m_WeightGradients.resize( m_Weights.size() );
 
 			m_Biases.resize( m_NumFeatureMaps );
-			m_DeltaBiases.resize( m_NumFeatureMaps );
+			m_BiasGradients.resize( m_NumFeatureMaps );
 
 			std::generate( m_Weights.begin(), m_Weights.end(), [&]() { return Random( -1.0f, 1.0f ); } );
 			std::fill( m_Biases.begin(), m_Biases.end(), 0.0f );
@@ -93,7 +93,7 @@ namespace ToyDNN
 						uint32_t outIdx = m_OutputShape.Index( x, y, f );
 						dE_dN[f] = _outputGradients[outIdx];
 
-						m_DeltaBiases[f] += dE_dN[f]; //dN_dB is ignored because it is 1
+						m_BiasGradients[f] += dE_dN[f]; //dN_dB is ignored because it is 1
 					}
 
 					for( uint32_t kz = 0 ; kz < m_InputShape.m_SZ ; ++kz )
@@ -112,7 +112,7 @@ namespace ToyDNN
 									uint32_t weightIdx = m_KernelShape.Size() * f + m_KernelShape.Index( kx, ky, kz );
 
 									Scalar dN_dW = _layerInputs[inIdx];
-									m_DeltaWeights[weightIdx] += dE_dN[f] * dN_dW;
+									m_WeightGradients[weightIdx] += dE_dN[f] * dN_dW;
 
 									_inputGradients[inIdx] += dE_dN[f] * m_Weights[weightIdx];
 								}
