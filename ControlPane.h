@@ -26,6 +26,7 @@ protected:
 
 	CComboBox m_SelectExample;
 	float m_LearningRate = 0.02f;
+	float m_WeightDecay = 0.0f;
 	UINT m_BatchSize = 32;
 	UINT m_ValidationInterval = 10;
 

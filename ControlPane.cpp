@@ -70,6 +70,8 @@ void CControlPane::DoDataExchange( CDataExchange* pDX )
 	DDX_Control( pDX, IDC_COMBO_SELECT_EXAMPLE, m_SelectExample );
 	DDX_Text( pDX, IDC_EDIT_LEARNING_RATE, m_LearningRate );
 	DDV_MinMaxFloat( pDX, m_LearningRate, 0.0f, 1.0f );
+	DDX_Text( pDX, IDC_EDIT_WEIGHT_DECAY, m_WeightDecay );
+	DDV_MinMaxFloat( pDX, m_WeightDecay, 0.0f, 1.0f );
 	DDX_Text( pDX, IDC_EDIT_BATCH_SIZE, m_BatchSize );
 	DDV_MinMaxUInt( pDX, m_BatchSize, 1, 1000000 );
 	DDX_Text( pDX, IDC_EDIT_VALIDATION_INTERVAL, m_ValidationInterval );
@@ -107,6 +109,7 @@ void CControlPane::OnStartStopTraining()
 	BOOL bEnableControls = m_IsTraining ? FALSE : TRUE;
 
 	GetDlgItem( IDC_EDIT_LEARNING_RATE )->EnableWindow( bEnableControls );
+	GetDlgItem( IDC_EDIT_WEIGHT_DECAY )->EnableWindow( bEnableControls );
 	GetDlgItem( IDC_EDIT_BATCH_SIZE )->EnableWindow( bEnableControls );
 	GetDlgItem( IDC_EDIT_VALIDATION_INTERVAL )->EnableWindow( bEnableControls );
 	GetDlgItem( IDC_BUTTON_RESET_TRAINING )->EnableWindow( bEnableControls );
@@ -120,6 +123,7 @@ void CControlPane::OnStartStopTraining()
 		HyperParameters params;
 		params.BatchSize = m_BatchSize;
 		params.LearningRate = m_LearningRate;
+		params.WeightDecay = m_WeightDecay;
 		params.ValidationInterval = m_ValidationInterval;
 
 		std::thread trainingThread( TrainingThread, params );

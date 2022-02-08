@@ -9,7 +9,7 @@ struct HyperParameters
 {
 	uint32_t BatchSize;
 	uint32_t ValidationInterval;
-	Scalar LearningRate;
+	Scalar LearningRate, WeightDecay;
 };
 
 class BaseExample
@@ -110,7 +110,7 @@ public:
 private:
 	void DrawUserDrawnDigit( CDC& _dc );
 private:
-	RMSpropOptimizer m_Optimizer;
+	SGDOptimizer m_Optimizer;
 
 	#ifdef USE_CIFAR10_INSTEAD_OF_MNIST
 	static const uint32_t m_ImageRes = 32;

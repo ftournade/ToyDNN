@@ -25,7 +25,7 @@
 #define IDC_EDIT_VALIDATION_INTERVAL    1007
 #define IDC_EDIT_BATCH_SIZE             1008
 #define IDC_COMBO_SELECT_EXAMPLE        1009
-#define IDC_COMBO1                      1010
+#define IDC_EDIT_WEIGHT_DECAY           1010
 
 // Next default values for new objects
 // 

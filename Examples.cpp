@@ -378,6 +378,7 @@ void Example3::Train( const HyperParameters& _params )
     const float errorTarget = 0.0000001f;
 
     m_Optimizer.LearningRate = _params.LearningRate;
+    m_Optimizer.WeightDecay = _params.WeightDecay;
 
     m_NeuralNet.Train( m_Optimizer, m_TrainingData, m_TrainingMetaData, m_ValidationData, m_ValidationMetaData,
                        numEpochs, _params.BatchSize, _params.ValidationInterval );

@@ -87,6 +87,9 @@ namespace ToyDNN
 		{
 			_optimizer.UpdateTrainableParameters( m_WeightGradients, m_Weights );
 			_optimizer.UpdateTrainableParameters( m_BiasGradients, m_Biases );
+
+			AssertIsFinite( m_Weights );
+			AssertIsFinite( m_Biases );
 		}
 
 		virtual bool GetRandomParameterAndAssociatedGradient( Scalar** _parameter, Scalar& _gradient ) override

@@ -214,6 +214,8 @@ namespace ToyDNN
 
 			m_Layers[layer]->Forward( *tensorIn, *tensorOut );
 
+			AssertIsFinite( *tensorOut );
+
 			if( _cacheLayersOutput )
 				m_Layers[layer]->CacheOutput( *tensorOut ); //For back propagation
 
@@ -323,6 +325,8 @@ namespace ToyDNN
 			outputGradients[1 - curTensor].resize( m_Layers[layer]->GetInputShape().Size() );
 
 			m_Layers[layer]->BackPropagation( *tensorIn, outputGradients[curTensor], outputGradients[1 - curTensor] );
+
+			AssertIsFinite( outputGradients[1 - curTensor] );
 
 			curTensor = 1 - curTensor; //Ping pong
 		}

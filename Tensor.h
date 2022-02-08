@@ -1,12 +1,32 @@
 #pragma once
 
 #include <vector>
+#include <cmath>
 #include <assert.h>
+
+//#define CHECK_NAN_AND_INF
+
+#ifdef CHECK_NAN_AND_INF
+	#define ASSERT_IS_FINITE( s ) if( !std::isfinite(s) ) { __debugbreak();}
+#else
+	#define ASSERT_IS_FINITE( s )
+#endif
 
 namespace ToyDNN
 {
 	typedef double Scalar;
 	typedef std::vector< Scalar > Tensor;
+
+	inline void AssertIsFinite( const std::vector< Scalar >& _scalars )
+	{
+		#ifdef CHECK_NAN_AND_INF
+		for( Scalar s : _scalars )
+		{
+			ASSERT_IS_FINITE( s )
+		}
+		#endif
+		
+	}
 
 	class TensorShape
 	{
@@ -19,7 +39,8 @@ namespace ToyDNN
 			assert( _x < m_SX );
 			assert( _y < m_SY );
 			assert( _z < m_SZ );
-			return m_SX * (m_SY * _z + _y) + _x; }
+			return m_SX * (m_SY * _z + _y) + _x; 
+		}
 
 		uint32_t m_SX, m_SY, m_SZ;
 	};
