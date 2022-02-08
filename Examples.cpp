@@ -280,7 +280,6 @@ void Example2::Train( const HyperParameters& _params )
 
 void Example2::Draw( CDC& _dc )
 {
-  //  m_NeuralNet.GradientCheck( m_Input, m_ExpectedOutput, 10 );
 
     std::vector< Scalar > predictedCurve( m_GroundTruthXAxis.size() );
 

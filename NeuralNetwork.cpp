@@ -425,7 +425,7 @@ namespace ToyDNN
 		assert( _dataSet.size() == _dataSetExpectedOutput.size() );
 
 		const Scalar epsilon = Scalar(1e-8);
-		const Scalar gradientTolerance = Scalar(0.01);
+		const Scalar gradientTolerance = Scalar(0.04);
 
 		//Evaluate gradients through with back propagation
 
@@ -435,7 +435,7 @@ namespace ToyDNN
 
 		for( uint32_t i=0 ; i < _dataSet.size() ; ++i )
 		{
-			Evaluate( _dataSet[i], out );
+			Evaluate( _dataSet[i], out, true );
 			BackPropagation( _dataSet[i], _dataSetExpectedOutput[i] );
 		}
 
@@ -486,6 +486,11 @@ namespace ToyDNN
 		}
 
 		Log( "%.2f%% of gradients were bad\n", (100.0f * badGradients) / (float)_numRandomParametersToCheck );
+		
+		TCHAR buffer[128];
+		_stprintf_s( buffer, _T("%.2f%% of gradients were bad. See log output."), (100.0f * badGradients) / (float)_numRandomParametersToCheck );
+		MessageBox( NULL, buffer, _T( "Gradient check" ), MB_OK );
+
 	}
 
 }
