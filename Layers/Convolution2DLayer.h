@@ -144,6 +144,9 @@ namespace ToyDNN
 			Write( _stream, m_KernelShape );
 		}
 
+		inline uint32_t GetKernelSize() const { return m_KernelSize; }
+		inline uint32_t GetNumFeatureMaps() const { return m_NumFeatureMaps; }
+
 	private:
 		uint32_t m_NumFeatureMaps, m_KernelSize, m_Stride;
 		TensorShape m_KernelShape;

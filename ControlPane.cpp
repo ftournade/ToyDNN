@@ -4,7 +4,7 @@
 #include "MainFrm.h"
 #include <thread>
 
-#define REFRESH_INTERVAL_IN_MS 5000
+#define REFRESH_INTERVAL_IN_MS 7000
 
 void TrainingThread( HyperParameters _params )
 {
@@ -40,6 +40,7 @@ LRESULT CControlPane::HandleInitDialog( WPARAM wParam, LPARAM lParam )
 	m_SelectExample.AddString( _T( "Example2" ) );
 	m_SelectExample.AddString( _T( "Example3" ) );
 	m_SelectExample.AddString( _T( "Example4" ) );
+	m_SelectExample.AddString( _T( "Example5" ) );
 	m_SelectExample.SetCurSel( 0 );
 
 	return TRUE;
@@ -96,6 +97,9 @@ void CControlPane::OnExampleChanged()
 			break;
 		case 3:
 			theApp.m_pExample = std::make_unique<Example4>();
+			break;
+		case 4:
+			theApp.m_pExample = std::make_unique<Example5>();
 			break;
 	}
 

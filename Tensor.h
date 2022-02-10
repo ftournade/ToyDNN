@@ -24,8 +24,7 @@ namespace ToyDNN
 		{
 			ASSERT_IS_FINITE( s )
 		}
-		#endif
-		
+		#endif		
 	}
 
 	class TensorShape

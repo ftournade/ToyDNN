@@ -46,4 +46,7 @@ namespace ToyDNN
 
 		float R, G, B;
 	};
+
+	void ComputeMeanAndVariance( const std::vector< Scalar >& _data, Scalar& _mean, Scalar& _variance );
+	Scalar PercentageOfZeroValues( const std::vector< Scalar >& _data );
 }

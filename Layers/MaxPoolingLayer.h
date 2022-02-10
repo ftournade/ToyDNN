@@ -19,7 +19,9 @@ namespace ToyDNN
 		virtual void Setup( const TensorShape& _previousLayerOutputShape ) override
 		{
 			m_InputShape = _previousLayerOutputShape;
-			m_OutputShape = TensorShape( _previousLayerOutputShape.m_SX / m_PoolSizeX, _previousLayerOutputShape.m_SY / m_PoolSizeY, _previousLayerOutputShape.m_SZ );
+			m_OutputShape = TensorShape( (_previousLayerOutputShape.m_SX + m_PoolSizeX  - 1) / m_PoolSizeX, 
+										 (_previousLayerOutputShape.m_SY + m_PoolSizeY  - 1) / m_PoolSizeY, 
+										 _previousLayerOutputShape.m_SZ );
 
 			m_MaxElement.resize( m_OutputShape.Size() );
 		}
@@ -35,14 +37,16 @@ namespace ToyDNN
 					{
 						uint32_t outIdx = m_OutputShape.Index( x, y, z );
 						
-						//TODO handle out of bound
+						Scalar maxValue = sizeof(Scalar) == sizeof(double) ? -DBL_MAX : -FLT_MAX;
+						PixelCoord maxElemCoord = { 0,0 };
 
-						Scalar maxValue = -FLT_MAX;
-						PixelCoord maxElemCoord;
+						uint32_t poolSizeY = std::min( m_PoolSizeY, m_InputShape.m_SY - y * m_PoolSizeY );
 
-						for( uint32_t py = 0 ; py < m_PoolSizeY ; ++py )
+						for( uint32_t py = 0 ; py < poolSizeY ; ++py )
 						{
-							for( uint32_t px = 0 ; px < m_PoolSizeX ; ++px )
+							uint32_t poolSizeX = std::min( m_PoolSizeX, m_InputShape.m_SX - x * m_PoolSizeX );
+
+							for( uint32_t px = 0 ; px < poolSizeX ; ++px )
 							{
 								uint32_t inIdx = m_InputShape.Index( x * m_PoolSizeX + px, y * m_PoolSizeY + py, z );
 								Scalar v = _in[inIdx];

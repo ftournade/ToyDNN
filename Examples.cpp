@@ -147,6 +147,67 @@ void BaseExample::DrawConvolutionLayerFeatures( CDC& _dc, uint32_t _layerIndex, 
 
 }
 
+void BaseExample::DrawConvolutionLayerKernels( CDC& _dc, uint32_t _layerIndex, int _x, int _y, uint32_t _zoom )
+{
+    assert( m_NeuralNet.DbgGetLayer( _layerIndex )->GetType() == LayerType::Convolution2D );
+
+    const Convolution2D* convLayer = (const Convolution2D *)m_NeuralNet.DbgGetLayer( _layerIndex );
+    const std::vector< Scalar >& kernelWeights = convLayer->GetWeights();
+
+    uint32_t kernelSize = convLayer->GetKernelSize();
+
+    uint32_t num2DKernels = convLayer->GetNumFeatureMaps() * convLayer->GetInputShape().m_SZ;
+
+    for( uint32_t f = 0 ; f < num2DKernels ; ++f )
+    {
+    #if 1
+        float vmin = FLT_MAX;
+        float vmax = -FLT_MAX;
+
+        for( uint32_t y = 0 ; y < kernelSize ; ++y )
+        {
+            for( uint32_t x = 0 ; x < kernelSize ; ++x )
+            {
+                float v = (float)kernelWeights[f * kernelSize * kernelSize + y * kernelSize + x];
+
+                vmin = std::min( vmin, v );
+                vmax = std::max( vmax, v );
+            }
+        }
+
+        float scale = 1.0f / (vmax - vmin);
+    #else
+        float scale = 1.0f;
+        float vmin = 0.0f;
+    #endif
+
+        for( uint32_t y = 0 ; y < kernelSize ; ++y )
+        {
+            for( uint32_t x = 0 ; x < kernelSize ; ++x )
+            {
+                float v = (float)kernelWeights[f * kernelSize * kernelSize + y * kernelSize + x];
+                v = (v - vmin) * scale;
+
+                v = v * 255.0f;
+                v = std::min( v, 255.0f );
+                v = std::max( v, 0.0f );
+
+                DWORD col = RGB( (int)v, (int)v, (int)v );
+
+                CRect r( x * _zoom,
+                         y * _zoom,
+                         (x + 1) * _zoom,
+                         (y + 1) * _zoom );
+                r.OffsetRect( _x + f * (_zoom * kernelSize + 3), _y );
+
+                _dc.FillSolidRect( r, col );
+            }
+        }
+    }
+
+}
+
+
 void BaseExample::DrawImage( CDC& _dc, const Tensor& _tensor, const TensorShape& _shape, int _x, int _y, uint32_t _zoom )
 {
     if( _tensor.empty() )
@@ -229,7 +290,9 @@ Example2::Example2()
 
     m_NeuralNet.AddLayer( new FullyConnected( 10 ) );
     m_NeuralNet.AddLayer( new LeakyRelu() );
-    m_NeuralNet.AddLayer( new FullyConnected( 10 ) );
+    m_NeuralNet.AddLayer( new FullyConnected( 100 ) );
+    m_NeuralNet.AddLayer( new LeakyRelu() );
+    m_NeuralNet.AddLayer( new FullyConnected( 100 ) );
     m_NeuralNet.AddLayer( new LeakyRelu() );
     m_NeuralNet.AddLayer( new FullyConnected( 1 ) );
     m_NeuralNet.AddLayer( new Tanh() );
@@ -321,15 +384,15 @@ Example3::Example3()
         m_NeuralNet.AddLayer( new Convolution2D( m_NumFeatureMaps, m_KernelSize, m_Stride ) );
         m_NeuralNet.AddLayer( new Relu() );
         m_NeuralNet.AddLayer( new MaxPooling( 2, 2 ) );
-        m_NeuralNet.AddLayer( new Convolution2D( m_NumFeatureMaps*2, m_KernelSize, m_Stride ) );
+        m_NeuralNet.AddLayer( new Convolution2D( m_NumFeatureMaps*4, m_KernelSize, m_Stride ) );
         m_NeuralNet.AddLayer( new Relu() );
         m_NeuralNet.AddLayer( new MaxPooling( 2, 2 ) );
-        m_NeuralNet.AddLayer( new FullyConnected( 1000 ) );
+        m_NeuralNet.AddLayer( new FullyConnected( 500 ) );
         m_NeuralNet.AddLayer( new Relu() );
         m_NeuralNet.AddLayer( new FullyConnected( 200 ) );
         m_NeuralNet.AddLayer( new Relu() );
         m_NeuralNet.AddLayer( new FullyConnected( 10 ) );
-        m_NeuralNet.AddLayer( new SoftMax() );
+        m_NeuralNet.AddLayer( new Sigmoid() );
         m_NeuralNet.Compile( TensorShape( m_ImageRes, m_ImageRes, numChannels ) );
         m_NeuralNet.EnableClassificationAccuracyLog();
 
@@ -377,7 +440,7 @@ void Example3::Train( const HyperParameters& _params )
     const float errorTarget = 0.0000001f;
 
     m_Optimizer.LearningRate = _params.LearningRate;
-    m_Optimizer.WeightDecay = _params.WeightDecay;
+    //m_Optimizer.WeightDecay = _params.WeightDecay;
 
     m_NeuralNet.Train( m_Optimizer, m_TrainingData, m_TrainingMetaData, m_ValidationData, m_ValidationMetaData,
                        numEpochs, _params.BatchSize, _params.ValidationInterval );
@@ -483,7 +546,14 @@ Example4::Example4()
     if( halfRes )
         m_InputShape = TensorShape( m_InputShape.m_SX / 2, m_InputShape.m_SY / 2, 3 );
 
-    m_NeuralNet.AddLayer( new Convolution2D( 16, 3, 2 ) );
+    m_NeuralNet.AddLayer( new Convolution2D( 16, 3, 1 ) );
+    m_NeuralNet.AddLayer( new MaxPooling( 2, 2 ) );
+    m_NeuralNet.AddLayer( new Relu() );
+    m_NeuralNet.AddLayer( new Convolution2D( 64, 3, 1 ) );
+    m_NeuralNet.AddLayer( new MaxPooling( 2, 2 ) );
+    m_NeuralNet.AddLayer( new Relu() );
+    m_NeuralNet.AddLayer( new Convolution2D( 256, 3, 1 ) );
+    m_NeuralNet.AddLayer( new MaxPooling( 2, 2 ) );
     m_NeuralNet.AddLayer( new Relu() );
     m_NeuralNet.AddLayer( new FullyConnected( 15 ) );
     m_NeuralNet.AddLayer( new Relu() );
@@ -498,6 +568,15 @@ Example4::Example4()
     if( !LoadCelebADataset( "D:\\Dev\\DeepLearning Datasets\\CelebA", halfRes, 2.0f, 0.02f,
                             m_TrainingData, m_ValidationData, m_TrainingMetaData, m_ValidationMetaData ) )
         throw std::exception("Can't load celebA database");
+}
+
+void Example4::GradientCheck()
+{
+    const uint32_t dataSetSize = 20;
+
+    std::vector< Tensor > data( m_ValidationData.begin(), m_ValidationData.begin() + dataSetSize );
+
+    m_NeuralNet.GradientCheck( data, data, 50 );
 }
 
 void Example4::Train( const HyperParameters& _params )
@@ -515,9 +594,123 @@ void Example4::Train( const HyperParameters& _params )
 void Example4::Draw( CDC& _dc )
 {
     PlotLearningCurve( _dc, CRect( 10, 400, 800, 800 ) );
-    DrawConvolutionLayerFeatures( _dc, 1, 5, 5, 3 );
+    DrawConvolutionLayerFeatures( _dc, 2, 5, 5, 3 );
+    DrawConvolutionLayerFeatures( _dc, 5, 5, 200, 3 );
+    DrawConvolutionLayerFeatures( _dc, 8, 5, 300, 3 );
 
     const Layer* outputLayer = m_NeuralNet.DbgGetLayer( m_NeuralNet.DbgGetLayerCount() - 1 );
 
     DrawImage( _dc, outputLayer->GetOutput(), m_InputShape, 1000, 300, 3 );
+}
+
+//-----------------------------------------
+
+
+Example5::Example5()
+{
+    srand( 111 );
+
+#ifdef USE_CIFAR10_INSTEAD_OF_MNIST
+    m_InputShape = TensorShape( m_ImageRes, m_ImageRes, 3 );
+#else
+    m_InputShape = TensorShape( m_ImageRes, m_ImageRes, 1 );
+#endif
+
+    if( m_NeuralNet.Load( m_NeuralNetFilename ) )
+    {
+//       m_IsTrained = true;
+    }
+    else
+    {
+    #if 0
+        m_NeuralNet.AddLayer( new FullyConnected( 256 ) );
+        m_NeuralNet.AddLayer( new Relu() );
+        m_NeuralNet.AddLayer( new FullyConnected( 128 ) );
+        m_NeuralNet.AddLayer( new Relu() );
+        m_NeuralNet.AddLayer( new FullyConnected( 64 ) );
+        m_NeuralNet.AddLayer( new Relu() );
+        m_NeuralNet.AddLayer( new FullyConnected( 4 ) );
+        m_NeuralNet.AddLayer( new Relu() );
+        m_NeuralNet.AddLayer( new FullyConnected( 64 ) );
+        m_NeuralNet.AddLayer( new Relu() );
+        m_NeuralNet.AddLayer( new FullyConnected( 128 ) );
+        m_NeuralNet.AddLayer( new Relu() );
+        m_NeuralNet.AddLayer( new FullyConnected( 256 ) );
+        m_NeuralNet.AddLayer( new Relu() );
+        m_NeuralNet.AddLayer( new FullyConnected( m_InputShape.Size() ) );
+        m_NeuralNet.AddLayer( new Sigmoid() );
+    #else
+        m_NeuralNet.AddLayer( new Convolution2D( 16, 5, 1 ) );
+        m_NeuralNet.AddLayer( new MaxPooling( 2, 2 ) );
+        m_NeuralNet.AddLayer( new LeakyRelu() );
+        m_NeuralNet.AddLayer( new FullyConnected( 8 ) );
+        m_NeuralNet.AddLayer( new LeakyRelu() );
+        m_NeuralNet.AddLayer( new FullyConnected( 64 ) );
+        m_NeuralNet.AddLayer( new LeakyRelu() );
+        m_NeuralNet.AddLayer( new FullyConnected( 128 ) );
+        m_NeuralNet.AddLayer( new LeakyRelu() );
+        m_NeuralNet.AddLayer( new FullyConnected( 256 ) );
+        m_NeuralNet.AddLayer( new LeakyRelu() );
+        m_NeuralNet.AddLayer( new FullyConnected( m_InputShape.Size() ) );
+        m_NeuralNet.AddLayer( new Sigmoid() );
+    #endif
+        m_NeuralNet.Compile( m_InputShape );
+     
+        std::vector<Tensor> unusedMetaData1, unusedMetaData2;
+    #ifdef USE_CIFAR10_INSTEAD_OF_MNIST
+        if( !LoadCifar10Dataset( "D:\\Dev\\DeepLearning Datasets\\cifar10",
+                                 m_TrainingData, m_ValidationData, unusedMetaData1, unusedMetaData2 ) )
+            throw std::exception( "Can't load Cifar10 database" );
+    #else
+        if( !LoadMnistDataset( "D:\\Dev\\DeepLearning Datasets\\MNIST",
+                               0.0f, 1.0f, 0, 0,
+                               m_TrainingData, m_ValidationData, unusedMetaData1, unusedMetaData2 ) )
+            throw std::exception( "Can't load MNIST database" );
+    #endif
+    }
+}
+
+void Example5::GradientCheck()
+{
+    const uint32_t dataSetSize = 20;
+
+    std::vector< Tensor > data( m_ValidationData.begin(), m_ValidationData.begin() + dataSetSize );
+
+    m_NeuralNet.GradientCheck( data, data, 50 );
+}
+
+void Example5::Train( const HyperParameters& _params )
+{
+    //Hyper parameters
+    const int numEpochs = 10000000;
+    const float errorTarget = 0.0000001f;
+
+    m_Optimizer.LearningRate = _params.LearningRate;
+    //m_Optimizer.WeightDecay = _params.WeightDecay;
+
+    m_NeuralNet.Train( m_Optimizer, m_TrainingData, m_TrainingData, m_ValidationData, m_ValidationData,
+                       numEpochs, _params.BatchSize, _params.ValidationInterval );
+}
+
+void Example5::Draw( CDC& _dc )
+{
+    TCHAR buffer[256];
+
+ 
+    PlotLearningCurve( _dc, CRect( 10, 400, 800, 800 ) );
+
+   // const Layer* outputLayer = m_NeuralNet.DbgGetLayer( m_NeuralNet.DbgGetLayerCount() - 1 );
+   // DrawImage( _dc, outputLayer->GetOutput(), m_InputShape, 1000, 300, 3 );
+
+    for( uint32_t i = 0 ; i < 15 ; ++i )
+    {
+        DrawImage( _dc, m_ValidationData[i], m_InputShape, i * 100, 10, 3 );
+        
+        Tensor out;
+        m_NeuralNet.Evaluate( m_ValidationData[i], out );
+        DrawImage( _dc, out, m_InputShape, i * 100, 120, 3 );
+    }
+
+    DrawConvolutionLayerKernels( _dc, 0, 5, 250, 6 );
+    DrawConvolutionLayerFeatures( _dc, 2, 5, 300, 6 );
 }

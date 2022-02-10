@@ -163,7 +163,7 @@ namespace ToyDNN
 			for( int i = 0 ; i < (int)n ; ++i )
 			{
 				//This one is a bit special
-				//dtanh(x)/dx = 1 - tanh(x)
+				//dtanh(x)/dx = 1 - tanh(x)²
 
 				Scalar gradient = Scalar(1.0) - GetOutput()[i] * GetOutput()[i];
 
@@ -176,6 +176,8 @@ namespace ToyDNN
 	class SoftMax : public BaseActivationLayer
 	{
 	public:
+		virtual void FixMeImFailingGradientCheck() = 0;
+
 		virtual LayerType GetType() const override { return LayerType::SoftMax; }
 
 		virtual void Forward( const Tensor& _in, Tensor& _out ) const override

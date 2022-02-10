@@ -40,6 +40,7 @@ namespace ToyDNN
 		virtual void ApplyGradients( Optimizer& _optimizer ) {}
 		virtual void BackPropagation( const Tensor& _layerInputs, const Tensor& _output, Tensor& _inputGradients ) = 0;
 		virtual bool GetRandomParameterAndAssociatedGradient( Scalar** _parameter, Scalar& _gradient ) { return false; } //used for gradient checking
+		virtual void PrintStatistics() const {}
 
 		inline const TensorShape& GetInputShape() const { return m_InputShape; }
 		inline const TensorShape& GetOutputShape() const { return m_OutputShape; }
@@ -137,6 +138,30 @@ namespace ToyDNN
 
 			Write( _stream, m_Biases.size() );
 			_stream.write( (const char*)&m_Biases[0], m_Biases.size() * sizeof( m_Biases[0] ) );
+		}
+
+		inline const std::vector< Scalar >& GetWeights() const { return m_Weights; }
+
+		virtual void PrintStatistics() const override
+		{
+			Scalar mean, variance;
+			ComputeMeanAndVariance( m_Weights, mean, variance );
+			Log( "  Weights mean: %e stddev: %e", mean, std::sqrt( variance ) );
+			Scalar z = PercentageOfZeroValues( m_Weights );
+			Log( " %.1f%% of zeroes\n" );
+
+			ComputeMeanAndVariance( m_Biases, mean, variance );
+			Log( "  Biases mean: %e stddev: %e\n", mean, std::sqrt( variance ) );
+
+			ComputeMeanAndVariance( m_WeightGradients, mean, variance );
+			Log( "  WeightGradients mean: %e stddev: %e", mean, std::sqrt( variance ) );
+			z = PercentageOfZeroValues( m_WeightGradients );
+			Log( " %.1f%% of zeroes\n" );
+
+			ComputeMeanAndVariance( m_BiasGradients, mean, variance );
+			Log( "  BiasGradients mean: %e stddev: %e", mean, std::sqrt(variance) );
+			z = PercentageOfZeroValues( m_BiasGradients );
+			Log( " %.1f%% of zeroes\n" );
 		}
 
 	protected:

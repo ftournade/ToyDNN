@@ -128,6 +128,8 @@ namespace ToyDNN
 				trainingError /= batchSize;
 				Log( "epoch %d batch %d (%d samples) took %.2fs, training error: %f\n", m_History.NumEpochCompleted, batch, batchSize, elapsedTime, trainingError );
 
+				//PrintStatistics();
+
 				Scalar fEpoch = Scalar( m_History.NumEpochCompleted ) + Scalar( m_History.NumSamplesCompleted ) / Scalar(numTrainingSamples);
 
 				m_History.TrainingSetErrorXAxis.push_back( fEpoch );
@@ -344,6 +346,17 @@ namespace ToyDNN
 			layer->ApplyGradients( _optimizer );
 	}
 
+	void NeuralNetwork::PrintStatistics() const
+	{
+		uint32_t i = 0;
+
+		for( const auto& layer : m_Layers )
+		{
+			Log( "Layer %d:\n", i++ );
+			layer->PrintStatistics();
+		}
+	}
+
 	void NeuralNetwork::ClearHistory()
 	{
 		m_History.TrainingSetErrorXAxis.clear();
@@ -470,15 +483,18 @@ namespace ToyDNN
 			//Compute gradient
 			Scalar groundThruthGradient = (error1 - error2) / (2.0f * epsilon);
 
-			Scalar gradientError = std::abs(backPropGradient - groundThruthGradient) / 
-									std::max( std::abs(backPropGradient), std::abs(groundThruthGradient) );
-
-			if( gradientError > gradientTolerance )
+			if( ( std::abs( backPropGradient ) > 1e-6 ) || (std::abs( groundThruthGradient ) > 1e-6) )
 			{
-			//	assert( false );
-				++badGradients;
-				Log( "Bad gradient (%f != %f, error=%.3f%%) found in layer %d. Probably a back propagation bug !\n", 
-					 (float)backPropGradient, (float)groundThruthGradient, 100.0f * (float)gradientError, randomLayer );
+				Scalar gradientError = std::abs(backPropGradient - groundThruthGradient) / 
+										std::max( std::abs(backPropGradient), std::abs(groundThruthGradient) );
+
+				if( gradientError > gradientTolerance )
+				{
+				//	assert( false );
+					++badGradients;
+					Log( "Bad gradient (%e != %e, error=%.3f%%) found in layer %d. Probably a back propagation bug !\n", 
+						 (double)backPropGradient, (double)groundThruthGradient, 100.0f * (float)gradientError, randomLayer );
+				}
 			}
 
 			//restore the parameter

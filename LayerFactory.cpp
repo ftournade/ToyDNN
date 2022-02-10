@@ -18,7 +18,7 @@ namespace ToyDNN
 			case LayerType::LeakyRelu: return new LeakyRelu;
 			case LayerType::Sigmoid: return new Sigmoid;
 			case LayerType::Tanh: return new Tanh;
-			case LayerType::SoftMax: return new SoftMax;
+//			case LayerType::SoftMax: return new SoftMax;
 			default: return nullptr;
 		}
 	}

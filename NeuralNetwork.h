@@ -38,6 +38,7 @@ namespace ToyDNN
 
 		const Layer* DbgGetLayer( uint32_t _idx ) const { return m_Layers[_idx].get(); }
 		uint32_t DbgGetLayerCount() const { return (uint32_t)m_Layers.size(); }
+		void PrintStatistics() const;
 
 		//Used to debug gradient computation
 		//The idea is to compare gradients computed during back propagation with gradients computed by finite difference.

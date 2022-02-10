@@ -42,6 +42,7 @@ protected:
 	inline bool IsLMouseButtonDown() const { return m_LMouseButtonDown; }
 
 	void PlotLearningCurve( CDC& _dc, const CRect& _r ) const;
+	void DrawConvolutionLayerKernels( CDC& _dc, uint32_t _layerIndex, int _x, int _y, uint32_t _zoom=1 );
 	void DrawConvolutionLayerFeatures( CDC& _dc, uint32_t _layerIndex, int _x, int _y, uint32_t _zoom=1 );
 	void DrawImage( CDC& _dc, const Tensor& _tensor, const TensorShape& _shape, int _x, int _y, uint32_t _zoom=1 );
 
@@ -83,7 +84,7 @@ public:
 	virtual void Draw( CDC& _dc ) override;
 
 protected:
-	SGDOptimizer m_Optimizer;
+	AdagradOptimizer m_Optimizer;
 	std::vector< Tensor > m_Input;
 	std::vector< Tensor > m_ExpectedOutput;
 
@@ -91,7 +92,7 @@ protected:
 };
 
 
-#define USE_CIFAR10_INSTEAD_OF_MNIST
+//#define USE_CIFAR10_INSTEAD_OF_MNIST
 //Basic MNIST classifier
 class Example3 : public BaseExample
 {
@@ -110,7 +111,7 @@ public:
 private:
 	void DrawUserDrawnDigit( CDC& _dc );
 private:
-	SGDOptimizer m_Optimizer;
+	AdagradOptimizer m_Optimizer;
 
 	#ifdef USE_CIFAR10_INSTEAD_OF_MNIST
 	static const uint32_t m_ImageRes = 32;
@@ -145,6 +146,7 @@ public:
 	virtual ~Example4() {}
 
 	virtual void Train( const HyperParameters& _params ) override;
+	virtual void GradientCheck() override;
 	virtual void Draw( CDC& _dc ) override;
 
 private:
@@ -156,4 +158,30 @@ private:
 	std::vector< CelebAMetaData > m_ValidationMetaData;
 
 	TensorShape m_InputShape;
+};
+
+//Basic MNIST autoencoder
+class Example5 : public BaseExample
+{
+public:
+	Example5();
+	virtual ~Example5() {}
+
+	virtual void Train( const HyperParameters& _params ) override;
+	virtual void GradientCheck() override;
+	virtual void Draw( CDC& _dc ) override;
+
+private:
+	SGDOptimizer m_Optimizer;
+
+#ifdef USE_CIFAR10_INSTEAD_OF_MNIST
+	static const uint32_t m_ImageRes = 32;
+	const char* m_NeuralNetFilename = "D:/tmp/example3_cifar10.dnn";
+#else
+	static const uint32_t m_ImageRes = 28;
+	const char* m_NeuralNetFilename = "D:/tmp/example3_mnist.dnn";
+#endif
+	TensorShape m_InputShape;
+	std::vector< Tensor > m_TrainingData;
+	std::vector< Tensor > m_ValidationData;
 };
