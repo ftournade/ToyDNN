@@ -10,6 +10,8 @@
 
 namespace ToyDNN
 {
+	Random g_Random;
+
 	void Log( const char* _format, ... )
 	{
 		const int bufferSize = 1024;

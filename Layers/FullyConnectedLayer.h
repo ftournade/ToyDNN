@@ -25,10 +25,9 @@ namespace ToyDNN
 			m_Biases.resize( m_OutputShape.m_SX );
 			m_BiasGradients.resize( m_OutputShape.m_SX );
 
-			// https://machinelearningmastery.com/weight-initialization-for-deep-learning-neural-networks/#:~:text=each%20in%20turn.-,Xavier%20Weight%20Initialization,of%20inputs%20to%20the%20node.&text=We%20can%20implement%20this%20directly%20in%20Python.
-			Scalar xavierWeightRange = Scalar(1.0) / std::sqrt( (Scalar)m_InputShape.m_SX );
+			//WeightInit::Xavier( m_InputShape.Size(), m_OutputShape.Size(), m_Weights );
+			WeightInit::He( m_InputShape.Size(), m_OutputShape.Size(), m_Weights );
 
-			std::generate( m_Weights.begin(), m_Weights.end(), [&]() { return Random(-xavierWeightRange, xavierWeightRange); });
 			std::fill( m_Biases.begin(), m_Biases.end(), 0.0f );
 		}
 

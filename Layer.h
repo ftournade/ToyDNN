@@ -12,6 +12,22 @@
 
 namespace ToyDNN
 {
+	namespace WeightInit
+	{
+		inline void Xavier( uint32_t _fanin, uint32_t _fanout, std::vector< Scalar >& _out )
+		{
+			Scalar r = std::sqrt( Scalar( 6 ) / Scalar(_fanin + _fanout) );
+
+			std::generate( _out.begin(), _out.end(), [&]() { return g_Random.UniformDistribution( -r, r ); } );
+		}
+
+		inline void He( uint32_t _fanin, uint32_t _fanout, std::vector< Scalar >& _out )
+		{
+			Scalar sigma = std::sqrt( Scalar(2) / Scalar(_fanin) );
+
+			std::generate( _out.begin(), _out.end(), [&]() { return g_Random.NormalDistribution( Scalar( 0 ), sigma ); } );
+		}
+	}
 
 	enum class LayerType : uint16_t
 	{

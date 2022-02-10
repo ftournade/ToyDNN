@@ -29,7 +29,10 @@ namespace ToyDNN
 			m_Biases.resize( m_NumFeatureMaps );
 			m_BiasGradients.resize( m_NumFeatureMaps );
 
-			std::generate( m_Weights.begin(), m_Weights.end(), [&]() { return Random( -1.0f, 1.0f ); } );
+			uint32_t fanIn = m_KernelSize * m_KernelSize * m_InputShape.m_SZ;
+			uint32_t fanOut = (m_KernelSize / m_Stride) * (m_KernelSize / m_Stride) * m_NumFeatureMaps;
+
+			WeightInit::He( fanIn, fanOut, m_Weights );
 			std::fill( m_Biases.begin(), m_Biases.end(), 0.0f );
 		}
 
