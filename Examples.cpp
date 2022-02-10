@@ -311,8 +311,8 @@ Example2::Example2()
     for( uint32_t i = 0 ; i < numSamples ; ++i )
     {
         float x = rangeMin + step * (float)i;
-       // float y = std::sin( 0.2f * x * std::abs( std::cos( x ) ) ); //The curve we want to fit
-        float y = std::sin( x );
+        float y = std::sin( 0.2f * x * std::abs( std::cos( x ) ) ); //The curve we want to fit
+       // float y = std::sin( x );
        // float y = x < 0.0f ? 0.0f : x > 1.0f ? 0.5f : 1.0f;
 
         m_Input[i].push_back( x / 20.0f );
@@ -401,7 +401,7 @@ Example3::Example3()
                                  m_TrainingData, m_ValidationData, m_TrainingMetaData, m_ValidationMetaData ) )
             throw std::exception( "Can't load Cifar10 database" );
     #else
-        if( !LoadMnistDataset( "D:\\Dev\\DeepLearning Datasets\\MNIST_fashion",
+        if( !LoadMnistDataset( "D:\\Dev\\DeepLearning Datasets\\MNIST",
                                0.0f, 1.0f, 0, 0,
                                m_TrainingData, m_ValidationData, m_TrainingMetaData, m_ValidationMetaData ) )
             throw std::exception( "Can't load MNIST database" );
@@ -430,7 +430,7 @@ void Example3::GradientCheck()
     std::vector< Tensor > data( m_ValidationData.begin(), m_ValidationData.begin() + dataSetSize );
     std::vector< Tensor > metaData( m_ValidationMetaData.begin(), m_ValidationMetaData.begin() + dataSetSize );
 
-    m_NeuralNet.GradientCheck( data, metaData, 50 );
+    m_NeuralNet.GradientCheck( data, metaData, 500 );
 }
 
 void Example3::Train( const HyperParameters& _params )
@@ -440,7 +440,7 @@ void Example3::Train( const HyperParameters& _params )
     const float errorTarget = 0.0000001f;
 
     m_Optimizer.LearningRate = _params.LearningRate;
-    //m_Optimizer.WeightDecay = _params.WeightDecay;
+    m_Optimizer.WeightDecay = _params.WeightDecay;
 
     m_NeuralNet.Train( m_Optimizer, m_TrainingData, m_TrainingMetaData, m_ValidationData, m_ValidationMetaData,
                        numEpochs, _params.BatchSize, _params.ValidationInterval );
@@ -448,9 +448,9 @@ void Example3::Train( const HyperParameters& _params )
 
 void Example3::Draw( CDC& _dc )
 {
- //   Tensor out;
- //   m_NeuralNet.Evaluate( m_UserDrawnDigit, out );
- //   m_RecognizedDigit = GetMostProbableClassIndex( out );
+    Tensor out;
+    m_NeuralNet.Evaluate( m_UserDrawnDigit, out );
+    m_RecognizedDigit = GetMostProbableClassIndex( out );
         
     RECT r = { m_UserDrawDigitRect.left, m_UserDrawDigitRect.bottom, m_UserDrawDigitRect.right, m_UserDrawDigitRect.bottom + 30 };
 
@@ -460,7 +460,8 @@ void Example3::Draw( CDC& _dc )
     
     DrawUserDrawnDigit( _dc );
     
-    DrawConvolutionLayerFeatures( _dc, 2, 5, 5, 4 );
+    DrawConvolutionLayerKernels( _dc, 0, 5, 5, 6 );
+    DrawConvolutionLayerFeatures( _dc, 2, 5, 50, 4 );
     DrawConvolutionLayerFeatures( _dc, 5, 5, 120, 4 );
 
     PlotLearningCurve( _dc, CRect( 10, 400, 800, 800 ) );
@@ -546,17 +547,17 @@ Example4::Example4()
     if( halfRes )
         m_InputShape = TensorShape( m_InputShape.m_SX / 2, m_InputShape.m_SY / 2, 3 );
 
+    m_NeuralNet.AddLayer( new Convolution2D( 8, 3, 1 ) );
+    m_NeuralNet.AddLayer( new MaxPooling( 2, 2 ) );
+    m_NeuralNet.AddLayer( new Relu() );
     m_NeuralNet.AddLayer( new Convolution2D( 16, 3, 1 ) );
     m_NeuralNet.AddLayer( new MaxPooling( 2, 2 ) );
     m_NeuralNet.AddLayer( new Relu() );
-    m_NeuralNet.AddLayer( new Convolution2D( 64, 3, 1 ) );
+    m_NeuralNet.AddLayer( new Convolution2D( 32, 3, 1 ) );
     m_NeuralNet.AddLayer( new MaxPooling( 2, 2 ) );
     m_NeuralNet.AddLayer( new Relu() );
-    m_NeuralNet.AddLayer( new Convolution2D( 256, 3, 1 ) );
-    m_NeuralNet.AddLayer( new MaxPooling( 2, 2 ) );
-    m_NeuralNet.AddLayer( new Relu() );
-    m_NeuralNet.AddLayer( new FullyConnected( 15 ) );
-    m_NeuralNet.AddLayer( new Relu() );
+    m_NeuralNet.AddLayer( new FullyConnected( 64 ) );
+    m_NeuralNet.AddLayer( new LeakyRelu() );
     m_NeuralNet.AddLayer( new FullyConnected( 100 ) );
     m_NeuralNet.AddLayer( new Relu() );
     m_NeuralNet.AddLayer( new FullyConnected( 400 ) );
@@ -576,7 +577,7 @@ void Example4::GradientCheck()
 
     std::vector< Tensor > data( m_ValidationData.begin(), m_ValidationData.begin() + dataSetSize );
 
-    m_NeuralNet.GradientCheck( data, data, 50 );
+    m_NeuralNet.GradientCheck( data, data, 500 );
 }
 
 void Example4::Train( const HyperParameters& _params )
@@ -593,14 +594,20 @@ void Example4::Train( const HyperParameters& _params )
 
 void Example4::Draw( CDC& _dc )
 {
-    PlotLearningCurve( _dc, CRect( 10, 400, 800, 800 ) );
-    DrawConvolutionLayerFeatures( _dc, 2, 5, 5, 3 );
-    DrawConvolutionLayerFeatures( _dc, 5, 5, 200, 3 );
-    DrawConvolutionLayerFeatures( _dc, 8, 5, 300, 3 );
+    for( uint32_t i = 0 ; i < 7 ; ++i )
+    {
+        DrawImage( _dc, m_ValidationData[i], m_InputShape, i * 180, 10, 2 );
 
-    const Layer* outputLayer = m_NeuralNet.DbgGetLayer( m_NeuralNet.DbgGetLayerCount() - 1 );
+        Tensor out;
+        m_NeuralNet.Evaluate( m_ValidationData[i], out );
+        DrawImage( _dc, out, m_InputShape, i * 180, 240, 2 );
+    }
 
-    DrawImage( _dc, outputLayer->GetOutput(), m_InputShape, 1000, 300, 3 );
+    PlotLearningCurve( _dc, CRect( 10, 800, 800, 1200 ) );
+    DrawConvolutionLayerFeatures( _dc, 2, 5, 480, 2 );
+    DrawConvolutionLayerFeatures( _dc, 5, 5, 590, 3 );
+    DrawConvolutionLayerFeatures( _dc, 8, 5, 670, 3 );
+
 }
 
 //-----------------------------------------
@@ -640,17 +647,17 @@ Example5::Example5()
         m_NeuralNet.AddLayer( new FullyConnected( m_InputShape.Size() ) );
         m_NeuralNet.AddLayer( new Sigmoid() );
     #else
-        m_NeuralNet.AddLayer( new Convolution2D( 16, 5, 1 ) );
+        m_NeuralNet.AddLayer( new Convolution2D( 32, 5, 1 ) );
         m_NeuralNet.AddLayer( new MaxPooling( 2, 2 ) );
-        m_NeuralNet.AddLayer( new LeakyRelu() );
-        m_NeuralNet.AddLayer( new FullyConnected( 8 ) );
+        m_NeuralNet.AddLayer( new Relu() );
+        m_NeuralNet.AddLayer( new FullyConnected( 16 ) );
         m_NeuralNet.AddLayer( new LeakyRelu() );
         m_NeuralNet.AddLayer( new FullyConnected( 64 ) );
-        m_NeuralNet.AddLayer( new LeakyRelu() );
+        m_NeuralNet.AddLayer( new Relu() );
         m_NeuralNet.AddLayer( new FullyConnected( 128 ) );
-        m_NeuralNet.AddLayer( new LeakyRelu() );
+        m_NeuralNet.AddLayer( new Relu() );
         m_NeuralNet.AddLayer( new FullyConnected( 256 ) );
-        m_NeuralNet.AddLayer( new LeakyRelu() );
+        m_NeuralNet.AddLayer( new Relu() );
         m_NeuralNet.AddLayer( new FullyConnected( m_InputShape.Size() ) );
         m_NeuralNet.AddLayer( new Sigmoid() );
     #endif
@@ -662,7 +669,7 @@ Example5::Example5()
                                  m_TrainingData, m_ValidationData, unusedMetaData1, unusedMetaData2 ) )
             throw std::exception( "Can't load Cifar10 database" );
     #else
-        if( !LoadMnistDataset( "D:\\Dev\\DeepLearning Datasets\\MNIST",
+        if( !LoadMnistDataset( "D:\\Dev\\DeepLearning Datasets\\MNIST_fashion",
                                0.0f, 1.0f, 0, 0,
                                m_TrainingData, m_ValidationData, unusedMetaData1, unusedMetaData2 ) )
             throw std::exception( "Can't load MNIST database" );
@@ -676,7 +683,7 @@ void Example5::GradientCheck()
 
     std::vector< Tensor > data( m_ValidationData.begin(), m_ValidationData.begin() + dataSetSize );
 
-    m_NeuralNet.GradientCheck( data, data, 50 );
+    m_NeuralNet.GradientCheck( data, data, 500 );
 }
 
 void Example5::Train( const HyperParameters& _params )

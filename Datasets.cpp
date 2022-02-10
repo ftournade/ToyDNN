@@ -27,6 +27,8 @@ namespace ToyDNN
 
 	bool LoadJpeg( const char* _filename, bool _halfRes, bool _grayscale, Tensor& _pixels )
 	{
+		bool degamma = true; //TODO not sure it's correct, images just looked dark
+
 		std::vector< uint8_t > rgbPixels; //RGB8
 		uint32_t width, height;
 
@@ -53,6 +55,11 @@ namespace ToyDNN
 						float p = Grayscale( x * 2, y * 2 ) + Grayscale( x * 2 + 1, y * 2 ) + Grayscale( x * 2, y * 2 + 1 ) + Grayscale( x * 2 + 1, y * 2 + 1 );
 						p *= 0.25f;
 
+						if( degamma )
+						{
+							p = std::pow( p, 1.0f / 2.2f );
+						}
+
 						_pixels[y * width / 2 + x] = p;
 					}
 				}
@@ -65,7 +72,14 @@ namespace ToyDNN
 				{
 					for( uint32_t x = 0 ; x < width ; ++x )
 					{
-						_pixels[y * width + x] = Grayscale( x, y );
+						float p = Grayscale( x, y );
+
+						if( degamma )
+						{
+							p = std::pow( p, 1.0f / 2.2f );
+						}
+
+						_pixels[y * width + x] = p;
 					}
 				}
 			}
@@ -98,6 +112,13 @@ namespace ToyDNN
 						g *= 0.25f;
 						b *= 0.25f;
 
+						if( degamma )
+						{
+							r = std::pow( r, 1.0f / 2.2f );
+							g = std::pow( g, 1.0f / 2.2f );
+							b = std::pow( b, 1.0f / 2.2f );
+						}
+
 						//Deinterlace RGB
 						_pixels[y * width / 2 + x] = r;
 						_pixels[channelSize + y * width / 2 + x] = g;
@@ -117,6 +138,13 @@ namespace ToyDNN
 						float r = 0.0f, g = 0.0f, b = 0.0f;
 
 						AddColor( x, y, r, g, b );
+
+						if( degamma )
+						{
+							r = std::pow( r, 1.0f / 2.2f );
+							g = std::pow( g, 1.0f / 2.2f );
+							b = std::pow( b, 1.0f / 2.2f );
+						}
 
 						//Deinterlace RGB
 						_pixels[y * width / 2 + x] = r;

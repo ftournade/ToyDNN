@@ -111,7 +111,7 @@ public:
 private:
 	void DrawUserDrawnDigit( CDC& _dc );
 private:
-	AdagradOptimizer m_Optimizer;
+	SGDOptimizer m_Optimizer;
 
 	#ifdef USE_CIFAR10_INSTEAD_OF_MNIST
 	static const uint32_t m_ImageRes = 32;
@@ -150,7 +150,7 @@ public:
 	virtual void Draw( CDC& _dc ) override;
 
 private:
-	SGDOptimizer m_Optimizer;
+	AdamOptimizer m_Optimizer;
 
 	std::vector< Tensor > m_TrainingData;
 	std::vector< CelebAMetaData > m_TrainingMetaData;
@@ -172,7 +172,7 @@ public:
 	virtual void Draw( CDC& _dc ) override;
 
 private:
-	SGDOptimizer m_Optimizer;
+	AdamOptimizer m_Optimizer;
 
 #ifdef USE_CIFAR10_INSTEAD_OF_MNIST
 	static const uint32_t m_ImageRes = 32;

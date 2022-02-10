@@ -154,6 +154,8 @@ namespace ToyDNN
 					Log( "End evaluating validation set (%.1fs)\n", validationEvalDuration );
 					//Log( "Validation set error: %f\n", validationSetError );
 
+					PrintStatistics();
+
 					m_History.ValidationSetErrorXAxis.push_back( fEpoch );
 					m_History.ValidationSetError.push_back( validationSetError );
 
