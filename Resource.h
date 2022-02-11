@@ -26,6 +26,8 @@
 #define IDC_EDIT_BATCH_SIZE             1008
 #define IDC_COMBO_SELECT_EXAMPLE        1009
 #define IDC_EDIT_WEIGHT_DECAY           1010
+#define IDC_BUTTON_LOAD                 1011
+#define IDC_BUTTON_SAVE                 1012
 
 // Next default values for new objects
 // 

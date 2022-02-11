@@ -23,12 +23,16 @@ BEGIN_MESSAGE_MAP( CControlPane, CPaneDialog )
 	ON_BN_CLICKED( IDC_BUTTON_TRAIN, OnStartStopTraining )
 	ON_BN_CLICKED( IDC_BUTTON_RESET_TRAINING, OnResetTraining )
 	ON_BN_CLICKED( IDC_BUTTON_GRADIENT_CHECK, OnGradientCheck )
+	ON_BN_CLICKED( IDC_BUTTON_LOAD, OnLoad )
+	ON_BN_CLICKED( IDC_BUTTON_SAVE, OnSave )
 	ON_WM_TIMER()
 
 	//workaround MFC bug https://social.msdn.microsoft.com/Forums/vstudio/en-US/2fd5c2a8-9e20-4d01-b02f-6be3c2f13220/button-is-disabled-by-using-cpanedialog?forum=vcgeneral
 	ON_UPDATE_COMMAND_UI( IDC_BUTTON_TRAIN, OnUpdateUI )
 	ON_UPDATE_COMMAND_UI( IDC_BUTTON_RESET_TRAINING, OnUpdateUI )
 	ON_UPDATE_COMMAND_UI( IDC_BUTTON_GRADIENT_CHECK, OnUpdateUI )
+	ON_UPDATE_COMMAND_UI( IDC_BUTTON_SAVE, OnUpdateUI )
+	ON_UPDATE_COMMAND_UI( IDC_BUTTON_LOAD, OnUpdateUI )
 END_MESSAGE_MAP()
 
 LRESULT CControlPane::HandleInitDialog( WPARAM wParam, LPARAM lParam )
@@ -118,6 +122,8 @@ void CControlPane::OnStartStopTraining()
 	GetDlgItem( IDC_EDIT_VALIDATION_INTERVAL )->EnableWindow( bEnableControls );
 	GetDlgItem( IDC_BUTTON_RESET_TRAINING )->EnableWindow( bEnableControls );
 	GetDlgItem( IDC_COMBO_SELECT_EXAMPLE )->EnableWindow( bEnableControls );
+	GetDlgItem( IDC_BUTTON_LOAD )->EnableWindow( bEnableControls );
+	GetDlgItem( IDC_BUTTON_SAVE )->EnableWindow( bEnableControls );
 
 	GetDlgItem( IDC_BUTTON_TRAIN )->SetWindowText( m_IsTraining ? _T("Pause training") : _T( "Start training" ) );
 
@@ -154,4 +160,26 @@ void CControlPane::OnResetTraining()
 void CControlPane::OnGradientCheck()
 {
 	theApp.m_pExample->GradientCheck();
+}
+
+void CControlPane::OnLoad()
+{
+	CFileDialog dlg( TRUE, _T("dnn"), nullptr, 0, _T( "Neural network (*.dnn)|*.dnn||") );
+
+	if( dlg.DoModal() != IDOK )
+		return;
+
+	theApp.m_pExample->GetNeuralNet().Load( dlg.GetPathName() );
+
+	((CMainFrame*)theApp.GetMainWnd())->GetChildView().Invalidate( FALSE );
+}
+
+void CControlPane::OnSave()
+{
+	CFileDialog dlg( FALSE, _T( "dnn" ), nullptr, 0, _T( "Neural network (*.dnn)|*.dnn||" ) );
+
+	if( dlg.DoModal() != IDOK )
+		return;
+	
+	theApp.m_pExample->GetNeuralNet().Save( dlg.GetPathName() );
 }

@@ -17,6 +17,8 @@ protected:
 	afx_msg void OnStartStopTraining();
 	afx_msg void OnResetTraining();
 	afx_msg void OnGradientCheck();
+	afx_msg void OnLoad();
+	afx_msg void OnSave();
 
 	afx_msg void OnTimer( UINT_PTR );
 

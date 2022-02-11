@@ -22,6 +22,8 @@ public:
 	void PauseTraining();
 	void ResumeTraining();
 
+	NeuralNetwork& GetNeuralNet() { return m_NeuralNet; }
+
 	void SetHwnd( HWND _hWnd ) { m_hWnd = _hWnd; }
 
 	virtual void Train( const HyperParameters& _params ) = 0;	
