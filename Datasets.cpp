@@ -27,7 +27,7 @@ namespace ToyDNN
 
 	bool LoadJpeg( const char* _filename, bool _halfRes, bool _grayscale, Tensor& _pixels )
 	{
-		bool degamma = true; //TODO not sure it's correct, images just looked dark
+		bool degamma = false; //TODO not sure it's correct, images just looked dark
 
 		std::vector< uint8_t > rgbPixels; //RGB8
 		uint32_t width, height;
@@ -106,7 +106,10 @@ namespace ToyDNN
 						//Average 4 pixels
 						float r = 0.0f, g = 0.0f, b = 0.0f;
 
-						AddColor( x * 2, y * 2, r, g, b );
+						AddColor( x * 2    , y * 2    , r, g, b );
+						AddColor( x * 2 + 1, y * 2    , r, g, b );
+						AddColor( x * 2    , y * 2 + 1, r, g, b );
+						AddColor( x * 2 + 1, y * 2 + 1, r, g, b );
 
 						r *= 0.25f;
 						g *= 0.25f;
