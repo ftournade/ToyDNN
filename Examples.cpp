@@ -233,7 +233,7 @@ void BaseExample::DrawImage( CDC& _dc, const Tensor& _tensor, const TensorShape&
                 col.G = col.R;
                 col.B = col.R;
             }
-            if( _shape.m_SZ == 3 )
+            else if( _shape.m_SZ == 3 )
             {
                 col.R = (float)_tensor[0 * sx * sy + y * sx + x];
                 col.G = (float)_tensor[1 * sx * sy + y * sx + x];
