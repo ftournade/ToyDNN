@@ -33,6 +33,7 @@ namespace ToyDNN
 	{
 		FullyConnected,
 		Convolution2D,
+		ConvolutionTranspose2D,
 		MaxPooling,
 
 		Relu,

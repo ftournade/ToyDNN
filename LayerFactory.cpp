@@ -12,6 +12,7 @@ namespace ToyDNN
 		{
 			case LayerType::FullyConnected: return new FullyConnected;
 			case LayerType::Convolution2D: return new Convolution2D;
+			case LayerType::ConvolutionTranspose2D: return new ConvolutionTranspose2D;
 			case LayerType::MaxPooling: return new MaxPooling;
 				 
 			case LayerType::Relu: return new Relu;
