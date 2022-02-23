@@ -439,7 +439,7 @@ namespace ToyDNN
 	{
 		assert( _dataSet.size() == _dataSetExpectedOutput.size() );
 
-		const Scalar epsilon = Scalar(1e-8);
+		const Scalar epsilon = sizeof(Scalar) == sizeof(double) ? Scalar(1e-8) : Scalar(1e-4);
 		const Scalar gradientTolerance = Scalar(0.04);
 
 		//Evaluate gradients through with back propagation
