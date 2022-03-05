@@ -15,9 +15,11 @@ namespace ToyDNN
 		}
 
 		virtual LayerType GetType() const override { return LayerType::MaxPooling; }
+		virtual const char* GetName() const override { return "MaxPooling"; }
 
-		virtual void Setup( const TensorShape& _previousLayerOutputShape ) override
+		virtual void Setup( const TensorShape& _previousLayerOutputShape, uint32_t _outputPadding ) override
 		{
+			//TODO support padding
 			m_InputShape = _previousLayerOutputShape;
 			m_OutputShape = TensorShape( (_previousLayerOutputShape.m_SX + m_PoolSizeX  - 1) / m_PoolSizeX, 
 										 (_previousLayerOutputShape.m_SY + m_PoolSizeY  - 1) / m_PoolSizeY, 

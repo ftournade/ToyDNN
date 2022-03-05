@@ -3,6 +3,7 @@
 #include "Layers/Convolution2DLayer.h"
 #include "Layers/MaxPoolingLayer.h"
 #include "Layers/Activation/ActivationLayers.h"
+#include "Layers/PaddingLayer.h"
 
 namespace ToyDNN
 {
@@ -20,6 +21,7 @@ namespace ToyDNN
 			case LayerType::Sigmoid: return new Sigmoid;
 			case LayerType::Tanh: return new Tanh;
 //			case LayerType::SoftMax: return new SoftMax;
+			case LayerType::Padding: return new PaddingLayer;
 			default: return nullptr;
 		}
 	}

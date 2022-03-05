@@ -94,7 +94,7 @@ protected:
 };
 
 
-//#define USE_CIFAR10_INSTEAD_OF_MNIST
+#define USE_CIFAR10_INSTEAD_OF_MNIST
 //Basic MNIST classifier
 class Example3 : public BaseExample
 {

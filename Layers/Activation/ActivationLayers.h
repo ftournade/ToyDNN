@@ -9,11 +9,16 @@ namespace ToyDNN
 {
 	class BaseActivationLayer : public Layer
 	{
+	protected:
+		BaseActivationLayer() {}
 	public:
-		virtual void Setup( const TensorShape& _previousLayerOutputShape ) override
+		virtual void Setup( const TensorShape& _previousLayerOutputShape, uint32_t _outputPadding ) override
 		{
 			m_InputShape = _previousLayerOutputShape;
 			m_OutputShape = _previousLayerOutputShape;
+			m_OutputShape.m_SX += _outputPadding - m_InputShape.m_Padding;
+			m_OutputShape.m_SY += _outputPadding - m_InputShape.m_Padding;
+			m_OutputShape.m_Padding = _outputPadding;
 		}
 	};
 
@@ -23,30 +28,42 @@ namespace ToyDNN
 	{
 	public:
 		virtual LayerType GetType() const override { return LayerType::Relu; }
+		virtual const char* GetName() const override { return "Relu"; }
 
 		virtual void Forward( const Tensor& _in, Tensor& _out ) const override
 		{
-			uint32_t n = m_OutputShape.Size();
+			if( m_OutputShape.m_Padding > 0 )
+				memset( &_out[0], 0, _out.size() * sizeof( Scalar ) );
 
-			//#pragma omp parallel for
-			for( int i = 0 ; i < (int)n ; ++i )
+			for( uint32_t z = 0 ; z < m_InputShape.m_SZ; ++z )
 			{
-				_out[i] = std::max( _in[i], Scalar(0.0) );
+				for( uint32_t y = 0 ; y < m_InputShape.m_SY - m_InputShape.m_Padding ; ++y )
+				{
+					for( uint32_t x = 0 ; x < m_InputShape.m_SX - m_InputShape.m_Padding ; ++x )
+					{
+						_out[m_OutputShape.PaddedIndex( x, y, z )] = std::max( _in[m_InputShape.Index( x, y, z )], Scalar( 0.0 ) );
+					}
+				}
 			}
 		}
 
 		virtual void BackPropagation( const Tensor& _layerInputs, const Tensor& _outputGradients, Tensor& _inputGradients ) override
 		{
-			uint32_t n = m_OutputShape.Size();
-
-			//#pragma omp parallel for
-			for( int i = 0 ; i < (int)n ; ++i )
+			for( uint32_t z = 0 ; z < m_InputShape.m_SZ ; ++z )
 			{
-				Scalar gradient = _layerInputs[i] >= Scalar(0.0) ? Scalar(1.0) : Scalar(0.0);
+				for( uint32_t y = 0 ; y < m_InputShape.m_SY - m_InputShape.m_Padding ; ++y )
+				{
+					for( uint32_t x = 0 ; x < m_InputShape.m_SX - m_InputShape.m_Padding ; ++x )
+					{
+						uint32_t outIdx = m_OutputShape.PaddedIndex( x, y, z );
+						uint32_t inIdx = m_InputShape.Index( x, y, z );
 
-				_inputGradients[i] = _outputGradients[i] * gradient;
+						Scalar gradient = _layerInputs[inIdx] >= Scalar( 0.0 ) ? Scalar( 1.0 ) : Scalar( 0.0 );
+
+						_inputGradients[inIdx] = _outputGradients[outIdx] * gradient;
+					}
+				}
 			}
-
 		}
 	};
 
@@ -61,28 +78,44 @@ namespace ToyDNN
 		}
 
 		virtual LayerType GetType() const override { return LayerType::LeakyRelu; }
+		virtual const char* GetName() const override { return "LeakyRelu"; }
 
 		virtual void Forward( const Tensor& _in, Tensor& _out ) const override
 		{
-			uint32_t n = m_OutputShape.Size();
-			
-			//#pragma omp parallel for
-			for( int i = 0 ; i < (int)n ; ++i )
+			if( m_OutputShape.m_Padding > 0 )
+				memset( &_out[0], 0, _out.size() * sizeof( Scalar ) );
+
+			for( uint32_t z = 0 ; z < m_InputShape.m_SZ ; ++z )
 			{
-				_out[i] = _in[i] > 0.0f ? _in[i] : _in[i] * m_Leak;
+				for( uint32_t y = 0 ; y < m_InputShape.m_SY - m_InputShape.m_Padding ; ++y )
+				{
+					for( uint32_t x = 0 ; x < m_InputShape.m_SX - m_InputShape.m_Padding ; ++x )
+					{
+						Scalar in = _in[m_InputShape.Index( x, y, z )];
+
+						_out[m_OutputShape.PaddedIndex( x, y, z )] = in > 0.0f ? in : in * m_Leak;
+					}
+				}
 			}
+
 		}
 
 		virtual void BackPropagation( const Tensor& _layerInputs, const Tensor& _outputGradients, Tensor& _inputGradients ) override
 		{
-			uint32_t n = m_OutputShape.Size();
-
-			//#pragma omp parallel for
-			for( int i = 0 ; i < (int)n ; ++i )
+			for( uint32_t z = 0 ; z < m_InputShape.m_SZ ; ++z )
 			{
-				Scalar gradient = _layerInputs[i] > Scalar(0.0) ? Scalar(1.0) : m_Leak;
+				for( uint32_t y = 0 ; y < m_InputShape.m_SY - m_InputShape.m_Padding ; ++y )
+				{
+					for( uint32_t x = 0 ; x < m_InputShape.m_SX - m_InputShape.m_Padding ; ++x )
+					{
+						uint32_t outIdx = m_OutputShape.PaddedIndex( x, y, z );
+						uint32_t inIdx = m_InputShape.Index( x, y, z );
 
-				_inputGradients[i] = _outputGradients[i] * gradient;
+						Scalar gradient = _layerInputs[inIdx] >= Scalar( 0.0 ) ? Scalar( 1.0 ) : m_Leak;
+
+						_inputGradients[inIdx] = _outputGradients[outIdx] * gradient;
+					}
+				}
 			}
 
 		}
@@ -107,31 +140,45 @@ namespace ToyDNN
 	{
 	public:
 		virtual LayerType GetType() const override { return LayerType::Sigmoid; }
+		virtual const char* GetName() const override { return "Sigmoid"; }
 
 		virtual void Forward( const Tensor& _in, Tensor& _out ) const override
 		{
-			uint32_t n = m_OutputShape.Size();
-			
-			//#pragma omp parallel for
-			for( int i = 0 ; i < (int)n ; ++i )
+			if( m_OutputShape.m_Padding > 0 )
+				memset( &_out[0], 0, _out.size() * sizeof( Scalar ) );
+
+			for( uint32_t z = 0 ; z < m_InputShape.m_SZ ; ++z )
 			{
-				_out[i] = Scalar(1.0) / (Scalar(1.0) + std::exp( -_in[i] ));
+				for( uint32_t y = 0 ; y < m_InputShape.m_SY - m_InputShape.m_Padding ; ++y )
+				{
+					for( uint32_t x = 0 ; x < m_InputShape.m_SX - m_InputShape.m_Padding ; ++x )
+					{
+						Scalar in = _in[m_InputShape.Index( x, y, z )];
+
+						_out[m_OutputShape.PaddedIndex( x, y, z )] = Scalar( 1.0 ) / (Scalar( 1.0 ) + std::exp( -in ));
+					}
+				}
 			}
+
 		}
 
 		virtual void BackPropagation( const Tensor& _layerInputs, const Tensor& _outputGradients, Tensor& _inputGradients ) override
 		{
-			uint32_t n = m_OutputShape.Size();
-
-			//#pragma omp parallel for
-			for( int i = 0 ; i < (int)n ; ++i )
+			for( uint32_t z = 0 ; z < m_InputShape.m_SZ ; ++z )
 			{
-				//This one is a bit special
-				//dsigmoid(x)/dx = sigmoid(x) * (1 - sigmoid(x))
+				for( uint32_t y = 0 ; y < m_InputShape.m_SY - m_InputShape.m_Padding ; ++y )
+				{
+					for( uint32_t x = 0 ; x < m_InputShape.m_SX - m_InputShape.m_Padding ; ++x )
+					{
+						uint32_t outIdx = m_OutputShape.PaddedIndex( x, y, z );
+						uint32_t inIdx = m_InputShape.Index( x, y, z );
+						Scalar out = GetOutput()[outIdx];
 
-				Scalar gradient = GetOutput()[i] * (Scalar(1.0) - GetOutput()[i]);
+						Scalar gradient = out * (Scalar( 1.0 ) - out);
 
-				_inputGradients[i] = _outputGradients[i] * gradient;
+						_inputGradients[inIdx] = _outputGradients[outIdx] * gradient;
+					}
+				}
 			}
 
 		}
@@ -143,31 +190,46 @@ namespace ToyDNN
 	{
 	public:
 		virtual LayerType GetType() const override { return LayerType::Tanh; }
+		virtual const char* GetName() const override { return "Tanh"; }
 
 		virtual void Forward( const Tensor& _in, Tensor& _out ) const override
 		{
-			uint32_t n = m_OutputShape.Size();
-			
-			//#pragma omp parallel for
-			for( int i = 0 ; i < (int)n ; ++i )
+			if( m_OutputShape.m_Padding > 0 )
+				memset( &_out[0], 0, _out.size() * sizeof( Scalar ) );
+
+			for( uint32_t z = 0 ; z < m_InputShape.m_SZ ; ++z )
 			{
-				_out[i] = std::tanh( _in[i] );
+				for( uint32_t y = 0 ; y < m_InputShape.m_SY - m_InputShape.m_Padding ; ++y )
+				{
+					for( uint32_t x = 0 ; x < m_InputShape.m_SX - m_InputShape.m_Padding ; ++x )
+					{
+						Scalar in = _in[m_InputShape.Index( x, y, z )];
+
+						_out[m_OutputShape.PaddedIndex( x, y, z )] = std::tanh( in );
+					}
+				}
 			}
 		}
 
 		virtual void BackPropagation( const Tensor& _layerInputs, const Tensor& _outputGradients, Tensor& _inputGradients ) override
 		{
-			uint32_t n = m_OutputShape.Size();
-
-			//#pragma omp parallel for
-			for( int i = 0 ; i < (int)n ; ++i )
+			for( uint32_t z = 0 ; z < m_InputShape.m_SZ ; ++z )
 			{
-				//This one is a bit special
-				//dtanh(x)/dx = 1 - tanh(x)²
+				for( uint32_t y = 0 ; y < m_InputShape.m_SY - m_InputShape.m_Padding ; ++y )
+				{
+					for( uint32_t x = 0 ; x < m_InputShape.m_SX - m_InputShape.m_Padding ; ++x )
+					{
+						uint32_t outIdx = m_OutputShape.PaddedIndex( x, y, z );
+						uint32_t inIdx = m_InputShape.Index( x, y, z );
+						Scalar out = GetOutput()[outIdx];
 
-				Scalar gradient = Scalar(1.0) - GetOutput()[i] * GetOutput()[i];
+						//This one is a bit special
+						//dtanh(x)/dx = 1 - tanh(x)²
+						Scalar gradient = Scalar( 1.0 ) - out * out;
 
-				_inputGradients[i] = _outputGradients[i] * gradient;
+						_inputGradients[inIdx] = _outputGradients[outIdx] * gradient;
+					}
+				}
 			}
 
 		}
@@ -179,9 +241,12 @@ namespace ToyDNN
 		virtual void FixMeImFailingGradientCheck() = 0;
 
 		virtual LayerType GetType() const override { return LayerType::SoftMax; }
+		virtual const char* GetName() const override { return "SoftMax"; }
 
 		virtual void Forward( const Tensor& _in, Tensor& _out ) const override
 		{
+			assert( false );//TODO support padding
+
 			uint32_t n = m_OutputShape.Size();
 			
 			Scalar alpha = *std::max_element( _in.begin(), _in.end() );
@@ -203,6 +268,8 @@ namespace ToyDNN
 
 		virtual void BackPropagation( const Tensor& _layerInputs, const Tensor& _outputGradients, Tensor& _inputGradients ) override
 		{
+			assert( false );//TODO support padding
+			
 			uint32_t n = m_OutputShape.Size();
 
 			Scalar* df = (Scalar*)alloca( sizeof( Scalar ) * n );

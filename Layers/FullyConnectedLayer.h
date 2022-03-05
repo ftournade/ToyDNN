@@ -19,13 +19,14 @@ namespace ToyDNN
 		}
 
 		virtual LayerType GetType() const override { return LayerType::FullyConnected; }
+		virtual const char* GetName() const override { return "FullyConnected"; }
 
-		virtual void Setup( const TensorShape& _previousLayerOutputShape ) override
+		virtual void Setup( const TensorShape& _previousLayerOutputShape, uint32_t _outputPadding ) override
 		{
 			m_InputShape = _previousLayerOutputShape;
 
-			uint32_t inputSize = m_InputShape.Size();
-			uint32_t outputSize = m_OutputShape.Size();
+			uint32_t inputSize = m_InputShape.SizeWithoutPadding();
+			uint32_t outputSize = m_OutputShape.SizeWithoutPadding();
 
 			m_Weights.resize( inputSize * outputSize );
 			m_WeightGradients.resize( m_Weights.size() );

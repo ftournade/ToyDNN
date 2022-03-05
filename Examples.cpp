@@ -460,9 +460,9 @@ void Example3::Draw( CDC& _dc )
     
     DrawUserDrawnDigit( _dc );
     
-    DrawConvolutionLayerKernels( _dc, 0, 5, 5, 6 );
-    DrawConvolutionLayerFeatures( _dc, 2, 5, 50, 4 );
-    DrawConvolutionLayerFeatures( _dc, 5, 5, 120, 4 );
+    DrawConvolutionLayerKernels( _dc, 1, 5, 5, 6 );
+    DrawConvolutionLayerFeatures( _dc, 3, 5, 50, 4 );
+    DrawConvolutionLayerFeatures( _dc, 6, 5, 120, 4 );
 
     PlotLearningCurve( _dc, CRect( 10, 400, 800, 800 ) );
 
@@ -541,32 +541,33 @@ Example4::Example4()
     srand( 333 );
 
     const bool halfRes = true;
-
-    m_InputShape = TensorShape( 178, 218, 3 );
+    
+    //TODO resize DB res to 192x224 so that it is divisible 3 or more times by 2
+//    m_InputShape = TensorShape( 178, 218, 3 );
+    m_InputShape = TensorShape( 176, 216, 3 );
 
     if( halfRes )
         m_InputShape = TensorShape( m_InputShape.m_SX / 2, m_InputShape.m_SY / 2, 3 );
 
-    m_NeuralNet.AddLayer( new Convolution2D( 8, 3, 1 ) );
-    m_NeuralNet.AddLayer( new MaxPooling( 2, 2 ) );
+    m_NeuralNet.AddLayer( new Convolution2D( 8, 3, 2 ) );
     m_NeuralNet.AddLayer( new Relu() );
-    m_NeuralNet.AddLayer( new Convolution2D( 16, 3, 1 ) );
-    m_NeuralNet.AddLayer( new MaxPooling( 2, 2 ) );
+    m_NeuralNet.AddLayer( new Convolution2D( 16, 3, 2 ) );
     m_NeuralNet.AddLayer( new Relu() );
-    m_NeuralNet.AddLayer( new Convolution2D( 32, 3, 1 ) );
-    m_NeuralNet.AddLayer( new MaxPooling( 2, 2 ) );
+    m_NeuralNet.AddLayer( new Convolution2D( 32, 3, 2 ) );
     m_NeuralNet.AddLayer( new Relu() );
-    m_NeuralNet.AddLayer( new FullyConnected( 64 ) );
+    m_NeuralNet.AddLayer( new FullyConnected( TensorShape( 6, 7, 1 ) ) );
     m_NeuralNet.AddLayer( new LeakyRelu() );
-    m_NeuralNet.AddLayer( new FullyConnected( 100 ) );
+    m_NeuralNet.AddLayer( new ConvolutionTranspose2D( 32, 3, 2 ) );
     m_NeuralNet.AddLayer( new Relu() );
-    m_NeuralNet.AddLayer( new FullyConnected( 400 ) );
+    m_NeuralNet.AddLayer( new ConvolutionTranspose2D( 16, 3, 2 ) );
     m_NeuralNet.AddLayer( new Relu() );
-    m_NeuralNet.AddLayer( new FullyConnected( m_InputShape.Size() ) );
+    m_NeuralNet.AddLayer( new ConvolutionTranspose2D( 8, 3, 2 ) );
+    m_NeuralNet.AddLayer( new Relu() );
+    m_NeuralNet.AddLayer( new ConvolutionTranspose2D( 4, 3, 2 ) );
     m_NeuralNet.AddLayer( new Sigmoid() );
     m_NeuralNet.Compile( m_InputShape );
 
-    if( !LoadCelebADataset( "D:\\Dev\\DeepLearning Datasets\\CelebA", halfRes, 2.0f, 0.02f,
+    if( !LoadCelebADataset( "D:\\Dev\\DeepLearning Datasets\\CelebA", halfRes, 5.0f, 0.02f,
                             m_TrainingData, m_ValidationData, m_TrainingMetaData, m_ValidationMetaData ) )
         throw std::exception("Can't load celebA database");
 }
@@ -630,37 +631,25 @@ Example5::Example5()
     else
     {
     #if 0
-        m_NeuralNet.AddLayer( new FullyConnected( 256 ) );
+        m_NeuralNet.AddLayer( new Convolution2D( 8, 3, 2 ) );
         m_NeuralNet.AddLayer( new Relu() );
-        m_NeuralNet.AddLayer( new FullyConnected( 128 ) );
+        m_NeuralNet.AddLayer( new Convolution2D( 16, 3, 2 ) );
         m_NeuralNet.AddLayer( new Relu() );
-        m_NeuralNet.AddLayer( new FullyConnected( 64 ) );
+        m_NeuralNet.AddLayer( new Convolution2D( 32, 3, 2 ) );
         m_NeuralNet.AddLayer( new Relu() );
-        m_NeuralNet.AddLayer( new FullyConnected( 4 ) );
-        m_NeuralNet.AddLayer( new Relu() );
-        m_NeuralNet.AddLayer( new FullyConnected( 64 ) );
-        m_NeuralNet.AddLayer( new Relu() );
-        m_NeuralNet.AddLayer( new FullyConnected( 128 ) );
-        m_NeuralNet.AddLayer( new Relu() );
-        m_NeuralNet.AddLayer( new FullyConnected( 256 ) );
-        m_NeuralNet.AddLayer( new Relu() );
-        m_NeuralNet.AddLayer( new FullyConnected( m_InputShape.Size() ) );
-        m_NeuralNet.AddLayer( new Sigmoid() );
-    #else
-        m_NeuralNet.AddLayer( new Convolution2D( 32, 5, 1 ) );
-        m_NeuralNet.AddLayer( new MaxPooling( 2, 2 ) );
-        m_NeuralNet.AddLayer( new Relu() );
-        m_NeuralNet.AddLayer( new FullyConnected( 16 ) );
+        m_NeuralNet.AddLayer( new FullyConnected( TensorShape( 4, 4, 4 ) ) );
         m_NeuralNet.AddLayer( new LeakyRelu() );
-        m_NeuralNet.AddLayer( new FullyConnected( 64 ) );
+        m_NeuralNet.AddLayer( new ConvolutionTranspose2D( 32, 3, 2 ) );
         m_NeuralNet.AddLayer( new Relu() );
-        m_NeuralNet.AddLayer( new FullyConnected( 128 ) );
+        m_NeuralNet.AddLayer( new ConvolutionTranspose2D( 16, 3, 2 ) );
         m_NeuralNet.AddLayer( new Relu() );
-        m_NeuralNet.AddLayer( new FullyConnected( 256 ) );
+        m_NeuralNet.AddLayer( new ConvolutionTranspose2D( 3, 3, 2 ) );
+    #else
+        m_NeuralNet.AddLayer( new Convolution2D( 8, 3, 2 ) );
         m_NeuralNet.AddLayer( new Relu() );
-        m_NeuralNet.AddLayer( new FullyConnected( m_InputShape.Size() ) );
-        m_NeuralNet.AddLayer( new Sigmoid() );
+        m_NeuralNet.AddLayer( new ConvolutionTranspose2D( 3, 3, 2 ) );
     #endif
+        m_NeuralNet.AddLayer( new Sigmoid() );
         m_NeuralNet.Compile( m_InputShape );
      
         std::vector<Tensor> unusedMetaData1, unusedMetaData2;
@@ -701,13 +690,8 @@ void Example5::Train( const HyperParameters& _params )
 
 void Example5::Draw( CDC& _dc )
 {
-    TCHAR buffer[256];
-
  
     PlotLearningCurve( _dc, CRect( 10, 400, 800, 800 ) );
-
-   // const Layer* outputLayer = m_NeuralNet.DbgGetLayer( m_NeuralNet.DbgGetLayerCount() - 1 );
-   // DrawImage( _dc, outputLayer->GetOutput(), m_InputShape, 1000, 300, 3 );
 
     for( uint32_t i = 0 ; i < 15 ; ++i )
     {
@@ -718,6 +702,10 @@ void Example5::Draw( CDC& _dc )
         DrawImage( _dc, out, m_InputShape, i * 100, 120, 3 );
     }
 
-    DrawConvolutionLayerKernels( _dc, 0, 5, 250, 6 );
-    DrawConvolutionLayerFeatures( _dc, 2, 5, 300, 6 );
+    DrawConvolutionLayerKernels( _dc, 1, 5, 250, 6 );
+    DrawConvolutionLayerKernels( _dc, 3, 5, 290, 6 );
+
+    DrawConvolutionLayerFeatures( _dc, 1, 5, 320, 3 );
+    DrawConvolutionLayerFeatures( _dc, 3, 5, 450, 3 );
+
 }

@@ -40,7 +40,9 @@ namespace ToyDNN
 		LeakyRelu,
 		Sigmoid,
 		Tanh,
-		SoftMax
+		SoftMax,
+
+		Padding
 	};
 
 	class Layer
@@ -50,7 +52,10 @@ namespace ToyDNN
 		virtual ~Layer() {}
 
 		virtual LayerType GetType() const = 0;
-		virtual void Setup( const TensorShape& _previousLayerOutputShape ) = 0;
+		virtual const char* GetName() const = 0;
+		virtual uint32_t GetInputPadding() const { return 0; }
+
+		virtual void Setup( const TensorShape& _previousLayerOutputShape, uint32_t _outputPadding ) = 0;
 		virtual void Forward( const Tensor& _in, Tensor& _out ) const = 0;
 		virtual void ClearGradients() {}
 		virtual void ScaleGradients( Scalar _scale ) {}
@@ -58,6 +63,12 @@ namespace ToyDNN
 		virtual void BackPropagation( const Tensor& _layerInputs, const Tensor& _output, Tensor& _inputGradients ) = 0;
 		virtual bool GetRandomParameterAndAssociatedGradient( Scalar** _parameter, Scalar& _gradient ) { return false; } //used for gradient checking
 		virtual void PrintStatistics() const {}
+		void PrintIOShape() const 
+		{
+			Log( "Layer: %s\n", GetName() );
+			Log( "\tInputShape: %dx%dx%d (padding=%d)\n", m_InputShape.m_SX, m_InputShape.m_SY, m_InputShape.m_SZ, m_InputShape.m_Padding );
+			Log( "\tOutputShape: %dx%dx%d (padding=%d)\n", m_OutputShape.m_SX, m_OutputShape.m_SY, m_OutputShape.m_SZ, m_OutputShape.m_Padding );
+		}
 
 		inline const TensorShape& GetInputShape() const { return m_InputShape; }
 		inline const TensorShape& GetOutputShape() const { return m_OutputShape; }

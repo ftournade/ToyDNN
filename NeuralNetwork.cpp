@@ -4,6 +4,9 @@
 #include "BMP.h"
 #include <chrono>
 #include <fstream>
+#include "Layers/PaddingLayer.h"
+
+
 /*
 Back-propagation
 	E: error
@@ -66,12 +69,34 @@ namespace ToyDNN
 	void NeuralNetwork::Compile( const TensorShape& _inputShape )
 	{
 		assert( !m_Layers.empty() );
+		assert( _inputShape.m_Padding == 0 );
 
-		m_Layers[0]->Setup( _inputShape );
+		Log( "Compiling network (%d explicit layers):\n", m_Layers.size() );
+
+		uint32_t padding = m_Layers[0]->GetInputPadding();
+		if( padding > 0 )
+		{
+			//insert an implicit padding layer at the start of the network
+			m_Layers.insert( m_Layers.begin(), std::unique_ptr<Layer>( new PaddingLayer() ) );
+		}
+
+		m_Layers[0]->Setup( _inputShape, padding );
+		m_Layers[0]->PrintIOShape();
 
 		for( uint32_t i = 1 ; i < m_Layers.size() ; ++i )
 		{
-			m_Layers[i]->Setup( m_Layers[i - 1]->GetOutputShape() );
+			if( i + 1 == m_Layers.size() )
+			{
+				//No padding for last layer output
+				padding = 0;
+			}
+			else
+			{
+				padding = m_Layers[i + 1]->GetInputPadding();
+			}
+
+			m_Layers[i]->Setup( m_Layers[i - 1]->GetOutputShape(), padding );
+			m_Layers[i]->PrintIOShape();
 		}
 	}
 

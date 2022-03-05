@@ -4,23 +4,45 @@
 
 namespace ToyDNN
 {
+	enum class Padding
+	{
+		Valid,
+		Same
+	};
 
 	class Convolution2D : public WeightsAndBiasesLayer
 	{
 	public:
-		Convolution2D( uint32_t _numFeatureMaps=0, uint32_t _kernelSize=0, uint32_t _stride = 1 )
-			: m_NumFeatureMaps( _numFeatureMaps ), m_KernelSize( _kernelSize ), m_Stride( _stride )
+		Convolution2D( uint32_t _numFeatureMaps=0, uint32_t _kernelSize=1, uint32_t _stride = 1, Padding _padding = Padding::Same )
+			: m_NumFeatureMaps( _numFeatureMaps ), m_KernelSize( _kernelSize ), m_Stride( _stride ), m_Padding( _padding )
 		{
+			assert( m_KernelSize % 2 == 1 ); //TODO support even kernels ?
 		}
 
 		virtual LayerType GetType() const override { return LayerType::Convolution2D; }
+		virtual const char* GetName() const override { return "Convolution2D"; }
 
-		virtual void Setup( const TensorShape& _previousLayerOutputShape ) override
+		virtual uint32_t GetInputPadding() const override
+		{
+			assert( m_KernelSize % 2 == 1 ); //TODO support even kernels ?
+
+			if( m_Padding == Padding::Same )
+			{
+				return m_KernelSize - m_Stride;
+			}
+			else
+			{
+				return 0;
+			}
+		}
+
+		virtual void Setup( const TensorShape& _previousLayerOutputShape, uint32_t _outputPadding ) override
 		{
 			m_InputShape = _previousLayerOutputShape;
-			m_OutputShape = TensorShape( (m_InputShape.m_SX - m_KernelSize + 1) / m_Stride,
-										 (m_InputShape.m_SY - m_KernelSize + 1) / m_Stride,
-										 m_NumFeatureMaps );
+			m_OutputShape = TensorShape( (m_InputShape.m_SX + _outputPadding - m_KernelSize + m_Stride ) / m_Stride,
+										 (m_InputShape.m_SY + _outputPadding - m_KernelSize + m_Stride ) / m_Stride,
+										 m_NumFeatureMaps,
+										 _outputPadding );
 
 			m_KernelShape = TensorShape( m_KernelSize, m_KernelSize, m_InputShape.m_SZ );
 			m_Weights.resize( m_NumFeatureMaps * m_KernelShape.Size() );
@@ -152,25 +174,45 @@ namespace ToyDNN
 
 	private:
 		uint32_t m_NumFeatureMaps, m_KernelSize, m_Stride;
+		Padding m_Padding;
 		TensorShape m_KernelShape;
 	};
+
+
+	//===========================================================
+
 
 	class ConvolutionTranspose2D : public WeightsAndBiasesLayer
 	{
 	public:
-		ConvolutionTranspose2D( uint32_t _numFeatureMaps = 0, uint32_t _kernelSize = 0, uint32_t _stride = 1 )
-			: m_NumFeatureMaps( _numFeatureMaps ), m_KernelSize( _kernelSize ), m_Stride( _stride )
+		ConvolutionTranspose2D( uint32_t _numFeatureMaps = 0, uint32_t _kernelSize = 0, uint32_t _stride = 1, Padding _padding = Padding::Same )
+			: m_NumFeatureMaps( _numFeatureMaps ), m_KernelSize( _kernelSize ), m_Stride( _stride ), m_Padding( _padding )
 		{
 		}
 
 		virtual LayerType GetType() const override { return LayerType::ConvolutionTranspose2D; }
+		virtual const char* GetName() const override { return "ConvolutionTranspose2D"; }
 
-		virtual void Setup( const TensorShape& _previousLayerOutputShape ) override
+		virtual void Setup( const TensorShape& _previousLayerOutputShape, uint32_t _outputPadding ) override
 		{
+			uint32_t padding;
+
+			if( m_Padding == Padding::Same )
+			{
+				padding = m_KernelSize - m_Stride;
+			}
+			else
+			{
+				assert( false ); //codepath untested
+				padding = 0;
+			}
+
+
 			m_InputShape = _previousLayerOutputShape;
 			m_OutputShape = TensorShape( (m_InputShape.m_SX - 1) * m_Stride + m_KernelSize,
-										 (m_InputShape.m_SY - 1) * m_Stride + m_KernelSize,
-										 m_NumFeatureMaps );
+										 (m_InputShape.m_SY - 1)* m_Stride + m_KernelSize,
+										 m_NumFeatureMaps,
+										 std::max( padding, _outputPadding ) );
 
 			m_KernelShape = TensorShape( m_KernelSize, m_KernelSize, m_InputShape.m_SZ );
 			m_Weights.resize( m_NumFeatureMaps * m_KernelShape.Size() );
@@ -289,6 +331,7 @@ namespace ToyDNN
 
 	private:
 		uint32_t m_NumFeatureMaps, m_KernelSize, m_Stride;
+		Padding m_Padding;
 		TensorShape m_KernelShape;
 	};
 
