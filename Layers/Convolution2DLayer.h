@@ -39,8 +39,8 @@ namespace ToyDNN
 		virtual void Setup( const TensorShape& _previousLayerOutputShape, uint32_t _outputPadding ) override
 		{
 			m_InputShape = _previousLayerOutputShape;
-			m_OutputShape = TensorShape( (m_InputShape.m_SX + _outputPadding - m_KernelSize + m_Stride ) / m_Stride,
-										 (m_InputShape.m_SY + _outputPadding - m_KernelSize + m_Stride ) / m_Stride,
+			m_OutputShape = TensorShape( _outputPadding + (m_InputShape.m_SX - m_KernelSize + m_Stride ) / m_Stride,
+										 _outputPadding + (m_InputShape.m_SY - m_KernelSize + m_Stride ) / m_Stride,
 										 m_NumFeatureMaps,
 										 _outputPadding );
 
@@ -63,9 +63,9 @@ namespace ToyDNN
 			
 			Scalar* accum = (Scalar*)alloca( sizeof( Scalar ) * m_OutputShape.m_SZ );
 
-			for( uint32_t y = 0 ; y < m_OutputShape.m_SY ; ++y )
+			for( uint32_t y = 0 ; y < m_OutputShape.m_SY - m_OutputShape.m_Padding ; ++y )
 			{
-				for( uint32_t x = 0 ; x < m_OutputShape.m_SX ; ++x )
+				for( uint32_t x = 0 ; x < m_OutputShape.m_SX - m_OutputShape.m_Padding ; ++x )
 				{
 					for( uint32_t f = 0 ; f < m_OutputShape.m_SZ ; ++f )
 					{
@@ -95,7 +95,7 @@ namespace ToyDNN
 
 					for( uint32_t f = 0 ; f < m_NumFeatureMaps ; ++f )
 					{
-						uint32_t outIdx = m_OutputShape.Index( x, y, f );
+						uint32_t outIdx = m_OutputShape.PaddedIndex( x, y, f );
 
 						_out[outIdx] = accum[f];
 					}
@@ -109,13 +109,13 @@ namespace ToyDNN
 
 			Scalar* dE_dN = (Scalar*)alloca( sizeof( Scalar ) * m_OutputShape.m_SZ );
 
-			for( uint32_t y = 0 ; y < m_OutputShape.m_SY ; ++y )
+			for( uint32_t y = 0 ; y < m_OutputShape.m_SY - m_OutputShape.m_Padding ; ++y )
 			{
-				for( uint32_t x = 0 ; x < m_OutputShape.m_SX ; ++x )
+				for( uint32_t x = 0 ; x < m_OutputShape.m_SX - m_OutputShape.m_Padding ; ++x )
 				{
 					for( uint32_t f = 0 ; f < m_OutputShape.m_SZ ; ++f )
 					{
-						uint32_t outIdx = m_OutputShape.Index( x, y, f );
+						uint32_t outIdx = m_OutputShape.PaddedIndex( x, y, f );
 						dE_dN[f] = _outputGradients[outIdx];
 
 						m_BiasGradients[f] += dE_dN[f]; //dN_dB is ignored because it is 1
@@ -209,8 +209,8 @@ namespace ToyDNN
 
 
 			m_InputShape = _previousLayerOutputShape;
-			m_OutputShape = TensorShape( (m_InputShape.m_SX - 1) * m_Stride + m_KernelSize,
-										 (m_InputShape.m_SY - 1)* m_Stride + m_KernelSize,
+			m_OutputShape = TensorShape( (m_InputShape.m_SX - m_InputShape.m_Padding - 1) * m_Stride + m_KernelSize,
+										 (m_InputShape.m_SY - m_InputShape.m_Padding - 1) * m_Stride + m_KernelSize,
 										 m_NumFeatureMaps,
 										 std::max( padding, _outputPadding ) );
 
@@ -233,13 +233,13 @@ namespace ToyDNN
 		{
 			std::fill( _out.begin(), _out.end(), Scalar( 0.0 ) );//TODO memset ?
 
-			for( uint32_t y = 0 ; y < m_InputShape.m_SY ; ++y )
+			for( uint32_t y = 0 ; y < m_InputShape.m_SY - m_InputShape.m_Padding ; ++y )
 			{
-				for( uint32_t x = 0 ; x < m_InputShape.m_SX ; ++x )
+				for( uint32_t x = 0 ; x < m_InputShape.m_SX - m_InputShape.m_Padding ; ++x )
 				{					
 					for( uint32_t kz = 0 ; kz < m_InputShape.m_SZ ; ++kz )
 					{
-						uint32_t inIdx = m_InputShape.Index( x, y, kz );
+						uint32_t inIdx = m_InputShape.PaddedIndex( x, y, kz );
 						Scalar in = _in[inIdx];
 
 						for( uint32_t ky = 0 ; ky < m_KernelSize ; ++ky )
@@ -271,13 +271,13 @@ namespace ToyDNN
 			Scalar* dE_dN = (Scalar*)alloca( sizeof( Scalar ) * m_OutputShape.m_SZ );
 			memset( dE_dN, 0, sizeof( Scalar ) * m_OutputShape.m_SZ );
 
-			for( uint32_t y = 0 ; y < m_InputShape.m_SY ; ++y )
+			for( uint32_t y = 0 ; y < m_InputShape.m_SY - m_InputShape.m_Padding ; ++y )
 			{
-				for( uint32_t x = 0 ; x < m_InputShape.m_SX ; ++x )
+				for( uint32_t x = 0 ; x < m_InputShape.m_SX - m_InputShape.m_Padding ; ++x )
 				{
 					for( uint32_t kz = 0 ; kz < m_InputShape.m_SZ ; ++kz )
 					{
-						uint32_t inIdx = m_InputShape.Index( x, y, kz );
+						uint32_t inIdx = m_InputShape.PaddedIndex( x, y, kz );
 						Scalar in = _layerInputs[inIdx];
 
 						for( uint32_t ky = 0 ; ky < m_KernelSize ; ++ky )
